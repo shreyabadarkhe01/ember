@@ -1,6 +1,8 @@
 package com.ember.backend.user;
 
+import com.ember.backend.common.AppException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,33 +12,25 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public UserDto createUser(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new AppException("Email already exists", HttpStatus.BAD_REQUEST);
         }
-        return toDto(userRepository.save(user));
+        return userMapper.toDto(userRepository.save(user));
     }
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(this::toDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public UserDto getUserById(Long id) {
         return userRepository.findById(id)
-                .map(this::toDto)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    private UserDto toDto(User user) {
-        UserDto dto = new UserDto();
-        dto.setId(user.getId());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setCreatedAt(user.getCreatedAt());
-        return dto;
+                .map(userMapper::toDto)
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
     }
 }

@@ -29,7 +29,12 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+
+    //@PrePersist is a JPA lifecycle callback used to execute logic before an entity is persisted to the database.
+    //@CreationTimeStamp can also be used to automatically set the createdAt field when the entity is saved, but it requires additional configuration and dependencies.
+
     @PrePersist
+    //JPA needs a method to execute at a specific lifecycle event. Annotations like PrePersist don’t work on variables, they work on methods.
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }

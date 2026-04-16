@@ -1,7 +1,9 @@
 package com.ember.backend.habit;
 
+import com.ember.backend.common.AppException;
 import com.ember.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,24 +14,25 @@ public class HabitService {
 
     private final HabitRepository habitRepository;
     private final UserRepository userRepository;
+    private final HabitMapper habitMapper;
 
     public HabitDto createHabit(Long userId, Habit habit) {
         var user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
         habit.setUser(user);
-        return toDto(habitRepository.save(habit));
+        return habitMapper.toDto(habitRepository.save(habit));
     }
 
     public List<HabitDto> getUserHabits(Long userId) {
         return habitRepository.findByUserId(userId)
                 .stream()
-                .map(this::toDto)
+                .map(habitMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public HabitDto scaleHabit(Long habitId, int energyScore) {
         var habit = habitRepository.findById(habitId)
-                .orElseThrow(() -> new RuntimeException("Habit not found"));
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
 
         if (energyScore >= 4) {
             habit.setStatus(HabitStatus.ACTIVE);
@@ -39,27 +42,13 @@ public class HabitService {
             habit.setStatus(HabitStatus.ARCHIVED);
         }
 
-        return toDto(habitRepository.save(habit));
+        return habitMapper.toDto(habitRepository.save(habit));
     }
 
     public HabitDto completeHabit(Long habitId) {
         var habit = habitRepository.findById(habitId)
-                .orElseThrow(() -> new RuntimeException("Habit not found"));
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
         habit.setStreakCount(habit.getStreakCount() + 1);
-        return toDto(habitRepository.save(habit));
-    }
-
-    private HabitDto toDto(Habit habit) {
-        HabitDto dto = new HabitDto();
-        dto.setId(habit.getId());
-        dto.setName(habit.getName());
-        dto.setFullVersion(habit.getFullVersion());
-        dto.setLiteVersion(habit.getLiteVersion());
-        dto.setMinimalVersion(habit.getMinimalVersion());
-        dto.setStatus(habit.getStatus());
-        dto.setStreakCount(habit.getStreakCount());
-        dto.setUserId(habit.getUser().getId());
-        dto.setCreatedAt(habit.getCreatedAt());
-        return dto;
+        return habitMapper.toDto(habitRepository.save(habit));
     }
 }
