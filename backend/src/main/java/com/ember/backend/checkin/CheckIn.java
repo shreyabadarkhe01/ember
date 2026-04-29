@@ -42,4 +42,13 @@ public class CheckIn {
             checkInDate = LocalDate.now();
         }
     }
+
+    // Tracks where the energy score came from
+    @Column(name = "source")
+    private String source;  // "samsung_health", "manual", "health_connect"
+
+    // Date of the check-in (separate from createdAt timestamp)
+    @Column(name = "date")
+    private LocalDate date;
+
 }

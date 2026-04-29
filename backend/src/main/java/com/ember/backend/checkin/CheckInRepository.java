@@ -9,4 +9,10 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
     List<CheckIn> findByUserId(Long userId);
     Optional<CheckIn> findByUserIdAndCheckInDate(Long userId, LocalDate date);
     List<CheckIn> findByUserIdOrderByCheckInDateDesc(Long userId);
+
+    // Check if user already checked in on a specific date
+    boolean existsByUserIdAndDate(Long userId, LocalDate date);
+
+    // Get latest check-in for a user
+    Optional<CheckIn> findTopByUserIdOrderByDateDesc(Long userId);
 }
