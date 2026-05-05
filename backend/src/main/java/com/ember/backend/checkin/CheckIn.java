@@ -23,6 +23,7 @@ public class CheckIn {
     private Integer energyScore;
 
     @Min(0) @Max(24)
+    @Column(name = "sleep_hours")
     private Double sleepHours;
 
     private String notes;
@@ -50,5 +51,20 @@ public class CheckIn {
     // Date of the check-in (separate from createdAt timestamp)
     @Column(name = "date")
     private LocalDate date;
+
+//    @Column(name = "sleep_hours")
+//    private Double sleepHours;  // e.g. 7.5
+
+    @Column(name = "hrv_ms")
+    private Double hrvMs;       // e.g. 55.0
+
+    @Column(name = "resting_heart_rate")
+    private Integer restingHeartRate;  // e.g. 62
+
+    @Column(name = "steps")
+    private Integer steps;      // e.g. 9000
+
+    @Column(name = "calories_burned")
+    private Integer caloriesBurned;    // e.g. 2200
 
 }

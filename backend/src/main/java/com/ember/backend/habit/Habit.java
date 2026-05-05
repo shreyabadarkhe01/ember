@@ -38,4 +38,7 @@ public class Habit {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    @Column(name = "scaled_target")
+    private Integer scaledTarget;
 }

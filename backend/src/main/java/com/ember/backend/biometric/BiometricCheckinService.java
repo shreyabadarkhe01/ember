@@ -68,6 +68,12 @@ public class BiometricCheckinService {
         checkIn.setDate(today);
         checkIn.setCreatedAt(LocalDateTime.now());
 
+        checkIn.setSleepHours(dto.getSleepHours());
+        checkIn.setHrvMs(dto.getHrvMs());
+        checkIn.setRestingHeartRate(dto.getRestingHeartRate());
+        checkIn.setSteps(dto.getSteps());
+        checkIn.setCaloriesBurned(dto.getCaloriesBurned());
+
         CheckIn saved = checkInRepository.save(checkIn);
 
         // 6. Return response with breakdown

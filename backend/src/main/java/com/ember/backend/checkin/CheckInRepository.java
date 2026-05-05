@@ -15,4 +15,9 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
 
     // Get latest check-in for a user
     Optional<CheckIn> findTopByUserIdOrderByDateDesc(Long userId);
+
+    // Fetch check-ins for a user between two dates (used by AutopsyService)
+    List<CheckIn> findByUserIdAndDateBetweenOrderByDateAsc(Long userId, LocalDate startDate, LocalDate endDate);
+
+
 }

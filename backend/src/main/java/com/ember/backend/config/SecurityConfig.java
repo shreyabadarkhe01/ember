@@ -47,7 +47,7 @@
 //    }
 //}
 
-package com.ember.backend;
+package com.ember.backend.config;
 
 import com.ember.backend.auth.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;

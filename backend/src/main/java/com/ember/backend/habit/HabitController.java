@@ -40,4 +40,27 @@ public class HabitController {
             @PathVariable Long habitId) {
         return ResponseEntity.ok(habitService.completeHabit(habitId));
     }
+
+    @PatchMapping("/{userId}/habits/{habitId}/skip")
+    public ResponseEntity<HabitDto> skipHabit(
+            @PathVariable Long userId,
+            @PathVariable Long habitId) {
+        return ResponseEntity.ok(habitService.skipHabit(habitId));
+    }
+
+    @PatchMapping("/{userId}/habits/{habitId}")
+    public ResponseEntity<HabitDto> updateHabit(
+            @PathVariable Long userId,
+            @PathVariable Long habitId,
+            @RequestBody HabitDto dto) {
+        return ResponseEntity.ok(habitService.updateHabit(habitId, dto));
+    }
+
+    @PatchMapping("/{userId}/habits/{habitId}/reset")
+    public ResponseEntity<HabitDto> resetHabit(
+            @PathVariable Long userId,
+            @PathVariable Long habitId) {
+        return ResponseEntity.ok(habitService.resetHabit(habitId));
+    }
+
 }

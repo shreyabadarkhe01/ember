@@ -34,21 +34,49 @@ public class HabitService {
         var habit = habitRepository.findById(habitId)
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
 
-        if (energyScore >= 4) {
-            habit.setStatus(HabitStatus.ACTIVE);
-        } else if (energyScore >= 2) {
-            habit.setStatus(HabitStatus.PAUSED);
-        } else {
-            habit.setStatus(HabitStatus.ARCHIVED);
-        }
+        // Return the appropriate version based on energy — no status change
+        String scaledVersion;
+        if (energyScore <= 2) scaledVersion = habit.getMinimalVersion();
+        else if (energyScore >= 4) scaledVersion = habit.getFullVersion();
+        else scaledVersion = habit.getLiteVersion();
 
-        return habitMapper.toDto(habitRepository.save(habit));
+        // Just log/return — no field to store yet, frontend uses the response
+        return habitMapper.toDto(habit); // HabitDto should include scaledVersion
     }
 
     public HabitDto completeHabit(Long habitId) {
         var habit = habitRepository.findById(habitId)
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+        habit.setStatus(HabitStatus.DONE);
         habit.setStreakCount(habit.getStreakCount() + 1);
+        return habitMapper.toDto(habitRepository.save(habit));
+    }
+
+    public HabitDto skipHabit(Long habitId) {
+        var habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+        habit.setStatus(HabitStatus.SKIPPED);
+        return habitMapper.toDto(habitRepository.save(habit));
+    }
+
+    public HabitDto updateHabit(Long habitId, HabitDto dto) {
+        var habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+        if (dto.getName() != null) habit.setName(dto.getName());
+        if (dto.getFullVersion() != null) habit.setFullVersion(dto.getFullVersion());
+        if (dto.getLiteVersion() != null) habit.setLiteVersion(dto.getLiteVersion());
+        if (dto.getMinimalVersion() != null) habit.setMinimalVersion(dto.getMinimalVersion());
+        return habitMapper.toDto(habitRepository.save(habit));
+    }
+
+    public HabitDto resetHabit(Long habitId) {
+        var habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+        // Decrement streak only if it was DONE
+        if (habit.getStatus() == HabitStatus.DONE && habit.getStreakCount() > 0) {
+            habit.setStreakCount(habit.getStreakCount() - 1);
+        }
+        habit.setStatus(HabitStatus.ACTIVE);
         return habitMapper.toDto(habitRepository.save(habit));
     }
 }
