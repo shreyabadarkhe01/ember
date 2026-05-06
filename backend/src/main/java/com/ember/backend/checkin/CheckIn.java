@@ -2,9 +2,7 @@ package com.ember.backend.checkin;
 
 import com.ember.backend.user.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,12 +20,9 @@ public class CheckIn {
     @Min(1) @Max(5)
     private Integer energyScore;
 
-    @Min(0) @Max(24)
-    @Column(name = "sleep_hours")
-    private Double sleepHours;
-
     private String notes;
 
+    @Column(name = "check_in_date")
     private LocalDate checkInDate;
 
     @ManyToOne
@@ -36,6 +31,24 @@ public class CheckIn {
 
     private LocalDateTime createdAt;
 
+    @Column(name = "source")
+    private String source;
+
+    @Column(name = "sleep_hours")
+    private Double sleepHours;
+
+    @Column(name = "hrv_ms")
+    private Double hrvMs;
+
+    @Column(name = "resting_heart_rate")
+    private Integer restingHeartRate;
+
+    @Column(name = "steps")
+    private Integer steps;
+
+    @Column(name = "calories_burned")
+    private Integer caloriesBurned;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -43,28 +56,4 @@ public class CheckIn {
             checkInDate = LocalDate.now();
         }
     }
-
-    // Tracks where the energy score came from
-    @Column(name = "source")
-    private String source;  // "samsung_health", "manual", "health_connect"
-
-    // Date of the check-in (separate from createdAt timestamp)
-    @Column(name = "date")
-    private LocalDate date;
-
-//    @Column(name = "sleep_hours")
-//    private Double sleepHours;  // e.g. 7.5
-
-    @Column(name = "hrv_ms")
-    private Double hrvMs;       // e.g. 55.0
-
-    @Column(name = "resting_heart_rate")
-    private Integer restingHeartRate;  // e.g. 62
-
-    @Column(name = "steps")
-    private Integer steps;      // e.g. 9000
-
-    @Column(name = "calories_burned")
-    private Integer caloriesBurned;    // e.g. 2200
-
 }

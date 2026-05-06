@@ -4,6 +4,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import './index.css';
+import AutopsyPage from './pages/AutopsyPage';
+
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -27,6 +29,7 @@ export default function App() {
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/autopsy" element={<ProtectedRoute><AutopsyPage /></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

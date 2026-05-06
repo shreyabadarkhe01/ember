@@ -26,33 +26,29 @@ public class CheckInService {
 
     public CheckInDto createCheckIn(Long userId, CheckIn checkIn) {
 
-        // 1. Validate user exists
+        // 1. Validate user
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-
 
         // 2. Prevent duplicate check-in for today
         checkInRepository.findByUserIdAndCheckInDate(userId, LocalDate.now())
                 .ifPresent(c -> { throw new AppException("Already checked in today", HttpStatus.BAD_REQUEST); });
 
-        // 3. Save check-in
+        // 3. ✅ Reset habits from previous days back to ACTIVE
+        habitRepository.findByUserId(userId).forEach(habit -> {
+            if (habit.getStatus() == HabitStatus.DONE
+                    || habit.getStatus() == HabitStatus.SKIPPED) {
+                habit.setStatus(HabitStatus.ACTIVE);
+                habitRepository.save(habit);
+            }
+        });
+
+        // 4. Save check-in
         checkIn.setUser(user);
         CheckIn saved = checkInRepository.save(checkIn);
 
-        // 4. Scale all user's habits based on energy score
+        // 5. Fetch updated habits and return
         List<Habit> habits = habitRepository.findByUserId(userId);
-        habits.forEach(habit -> {
-            if (checkIn.getEnergyScore() >= 4) {
-                habit.setStatus(HabitStatus.ACTIVE);
-            } else if (checkIn.getEnergyScore() >= 2) {
-                habit.setStatus(HabitStatus.PAUSED);
-            } else {
-                habit.setStatus(HabitStatus.ARCHIVED);
-            }
-            habitRepository.save(habit);
-        });
-
-        // 5. Build and return response
         return toDto(saved, habits, checkIn.getEnergyScore());
     }
 

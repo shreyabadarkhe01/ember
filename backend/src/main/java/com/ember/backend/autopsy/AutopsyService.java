@@ -39,44 +39,65 @@ public class AutopsyService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
 
+
         // Date range — last 7 days
         LocalDate weekEnd = LocalDate.now();
         LocalDate weekStart = weekEnd.minusDays(6);
+        log.info("Date range: {} to {}", weekStart, weekEnd);
 
         // Fetch check-ins for the week
         List<CheckIn> checkIns = checkInRepository
-                .findByUserIdAndDateBetweenOrderByDateAsc(userId, weekStart, weekEnd);
+                .findByUserIdAndCheckInDateBetweenOrderByCheckInDateAsc(userId, weekStart, weekEnd);
+        log.info("CheckIns found: {}", checkIns.size());
 
         // Fetch habits for the user
         List<Habit> habits = habitRepository.findByUserId(userId);
+        log.info("Habits found: {}", habits.size());
 
         // ── Build daily breakdown ────────────────────────────────────
+        log.info("Daily breakdown built");
         List<DailyEnergyDto> energyByDay = buildDailyBreakdown(weekStart, weekEnd, checkIns);
+        log.info("Daily breakdown done");
+
+        log.info("Building AutopsyDto...");
 
         // ── Energy analysis ──────────────────────────────────────────
+        log.info("Calculating scores...");
         List<Integer> scores = checkIns.stream()
                 .map(CheckIn::getEnergyScore)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        log.info("Scores: {}", scores);
 
         double avgEnergy = scores.isEmpty() ? 0.0 :
                 scores.stream().mapToInt(i -> i).average().orElse(0.0);
+        log.info("Avg energy: {}", avgEnergy);
 
         // Best and worst days
+        log.info("Finding best day...");
         String bestDay = findDayByScore(checkIns, true);
+        log.info("Best day: {}", bestDay);
+        log.info("Finding worst day...");
         String worstDay = findDayByScore(checkIns, false);
+        log.info("Worst day: {}", worstDay);
 
+        log.info("Counting high/low energy days...");
         long highEnergyDays = scores.stream().filter(s -> s >= 4).count();
         long lowEnergyDays = scores.stream().filter(s -> s <= 2).count();
+        log.info("High: {}, Low: {}", highEnergyDays, lowEnergyDays);
 
         // ── Consistency ──────────────────────────────────────────────
-        int totalCheckIns = checkIns.size();
+        log.info("Consistency...");
+        int totalCheckIns = (int) checkIns.stream()
+                .map(CheckIn::getCheckInDate)
+                .distinct()
+                .count();
         int consistencyScore = (int) Math.round((totalCheckIns / 7.0) * 100);
 
         // ── Habit performance ────────────────────────────────────────
         // Count habits by status across all check-ins this week
-        // NOTE: Currently, habits don't have DONE/SKIPPED status; assuming all active habits are assigned
-        // TODO: Implement habit completion tracking per check-in
+
+        log.info("Habit performance...");
         List<Habit> activeHabits = habits.stream()
                 .filter(h -> h.getStatus() == HabitStatus.ACTIVE)
                 .collect(Collectors.toList());
@@ -84,16 +105,27 @@ public class AutopsyService {
         long totalSkipped = 0; // Placeholder: not implemented yet
         int totalHabits = activeHabits.size();
         int completionRate = 0; // Placeholder
+        log.info("Done habits: {}", totalDone);
 
         // ── Pattern detection ────────────────────────────────────────
+        log.info("Detecting patterns...");
         List<String> patterns = detectPatterns(checkIns, avgEnergy);
+        log.info("Patterns detected: {}", patterns.size());
+        log.info("Patterns done");
 
         // ── Biometric correlations ───────────────────────────────────
+        log.info("Sleep correlation...");
         String sleepCorrelation = analyseSleepCorrelation(checkIns);
+        log.info("Sleep done");
+
+        log.info("HRV correlation...");
         String hrvCorrelation = analyseHrvCorrelation(checkIns);
+        log.info("HRV done");
 
         // ── Week summary label ───────────────────────────────────────
+        log.info("Week summary...");
         String weekSummary = generateWeekSummary(avgEnergy, consistencyScore);
+        log.info("Building final DTO...");
 
         AutopsyDto autopsy = AutopsyDto.builder()
                 .userId(userId)
@@ -126,6 +158,7 @@ public class AutopsyService {
         } catch (Exception e) {
             log.warn("Claude insight generation failed, continuing without it");
         }
+
         
         return autopsy;
     }
@@ -136,17 +169,60 @@ public class AutopsyService {
      * Build a DailyEnergyDto for each day in the week,
      * including days where user didn't check in (checkedIn = false).
      */
+//    private List<DailyEnergyDto> buildDailyBreakdown(
+//            LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns) {
+//
+//        // Map check-ins by date for quick lookup
+//        Map<LocalDate, CheckIn> checkInMap = checkIns.stream()
+//                .collect(Collectors.toMap(CheckIn::getCheckInDate, c -> c));
+//
+//        List<DailyEnergyDto> days = new ArrayList<>();
+//        LocalDate current = weekStart;
+//
+//        while (!current.isAfter(weekEnd)) {
+//            CheckIn checkIn = checkInMap.get(current);
+//            String dayName = current.getDayOfWeek()
+//                    .getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+//
+//            DailyEnergyDto.DailyEnergyDtoBuilder builder = DailyEnergyDto.builder()
+//                    .date(current)
+//                    .dayName(dayName)
+//                    .checkedIn(checkIn != null);
+//
+//            if (checkIn != null) {
+//                builder.energyScore(checkIn.getEnergyScore())
+//                        .source(checkIn.getSource());
+//                // Add biometric data if available on CheckIn entity
+//                // builder.sleepHours(checkIn.getSleepHours());
+//                // builder.hrvMs(checkIn.getHrvMs());
+//                // builder.restingHeartRate(checkIn.getRestingHeartRate());
+//                // builder.steps(checkIn.getSteps());
+//            }
+//
+//            days.add(builder.build());
+//            current = current.plusDays(1);
+//        }
+//
+//        return days;
+//    }
+
     private List<DailyEnergyDto> buildDailyBreakdown(
             LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns) {
 
-        // Map check-ins by date for quick lookup
+        log.info("Building map...");
         Map<LocalDate, CheckIn> checkInMap = checkIns.stream()
-                .collect(Collectors.toMap(CheckIn::getDate, c -> c));
+                .collect(Collectors.toMap(
+                        CheckIn::getCheckInDate,
+                        c -> c,
+                        (existing, replacement) -> replacement // keep latest if duplicate
+                ));
+        log.info("Map built: {}", checkInMap.size());
 
         List<DailyEnergyDto> days = new ArrayList<>();
         LocalDate current = weekStart;
 
         while (!current.isAfter(weekEnd)) {
+            log.info("Processing day: {}", current);
             CheckIn checkIn = checkInMap.get(current);
             String dayName = current.getDayOfWeek()
                     .getDisplayName(TextStyle.FULL, Locale.ENGLISH);
@@ -157,19 +233,16 @@ public class AutopsyService {
                     .checkedIn(checkIn != null);
 
             if (checkIn != null) {
+                log.info("CheckIn found for {}: energy={}", current, checkIn.getEnergyScore());
                 builder.energyScore(checkIn.getEnergyScore())
                         .source(checkIn.getSource());
-                // Add biometric data if available on CheckIn entity
-                // builder.sleepHours(checkIn.getSleepHours());
-                // builder.hrvMs(checkIn.getHrvMs());
-                // builder.restingHeartRate(checkIn.getRestingHeartRate());
-                // builder.steps(checkIn.getSteps());
             }
 
             days.add(builder.build());
             current = current.plusDays(1);
         }
 
+        log.info("Daily breakdown complete: {} days", days.size());
         return days;
     }
 
@@ -183,7 +256,7 @@ public class AutopsyService {
                 .filter(c -> c.getEnergyScore() != null)
                 .min(Comparator.comparingInt(c ->
                         best ? -c.getEnergyScore() : c.getEnergyScore()))
-                .map(c -> c.getDate().getDayOfWeek()
+                .map(c -> c.getCheckInDate().getDayOfWeek()
                         .getDisplayName(TextStyle.FULL, Locale.ENGLISH))
                 .orElse("N/A");
     }
@@ -219,7 +292,7 @@ public class AutopsyService {
         // Pattern: Weekend energy drop
         boolean weekendLow = checkIns.stream()
                 .filter(c -> {
-                    DayOfWeek day = c.getDate().getDayOfWeek();
+                    DayOfWeek day = c.getCheckInDate().getDayOfWeek();
                     return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
                 })
                 .anyMatch(c -> c.getEnergyScore() != null && c.getEnergyScore() <= 2);
@@ -229,7 +302,7 @@ public class AutopsyService {
 
         // Pattern: Monday low energy (common pattern)
         checkIns.stream()
-                .filter(c -> c.getDate().getDayOfWeek() == DayOfWeek.MONDAY)
+                .filter(c -> c.getCheckInDate().getDayOfWeek() == DayOfWeek.MONDAY)
                 .filter(c -> c.getEnergyScore() != null && c.getEnergyScore() <= 2)
                 .findFirst()
                 .ifPresent(c -> patterns.add("😴 Low energy on Monday — weekend sleep schedule may be off"));

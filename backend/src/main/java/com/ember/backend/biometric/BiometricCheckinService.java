@@ -42,7 +42,7 @@ public class BiometricCheckinService {
         // 2. Check already checked in today
         LocalDate today = LocalDate.now();
         boolean alreadyCheckedIn = checkInRepository
-                .existsByUserIdAndDate(userId, today);
+                .existsByUserIdAndCheckInDate(userId, today);
         if (alreadyCheckedIn) {
             throw new AppException("Already checked in today", HttpStatus.CONFLICT);
         }
@@ -65,7 +65,7 @@ public class BiometricCheckinService {
         checkIn.setEnergyScore(energyScore);
         checkIn.setNotes(dto.getNote());
         checkIn.setSource(dto.getSource());
-        checkIn.setDate(today);
+        checkIn.setCheckInDate(today);
         checkIn.setCreatedAt(LocalDateTime.now());
 
         checkIn.setSleepHours(dto.getSleepHours());

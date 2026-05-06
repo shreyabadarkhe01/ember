@@ -7,17 +7,10 @@ import java.util.Optional;
 
 public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
     List<CheckIn> findByUserId(Long userId);
-    Optional<CheckIn> findByUserIdAndCheckInDate(Long userId, LocalDate date);
+    Optional<CheckIn> findByUserIdAndCheckInDate(Long userId, LocalDate checkInDate);
     List<CheckIn> findByUserIdOrderByCheckInDateDesc(Long userId);
-
-    // Check if user already checked in on a specific date
-    boolean existsByUserIdAndDate(Long userId, LocalDate date);
-
-    // Get latest check-in for a user
-    Optional<CheckIn> findTopByUserIdOrderByDateDesc(Long userId);
-
-    // Fetch check-ins for a user between two dates (used by AutopsyService)
-    List<CheckIn> findByUserIdAndDateBetweenOrderByDateAsc(Long userId, LocalDate startDate, LocalDate endDate);
-
-
+    boolean existsByUserIdAndCheckInDate(Long userId, LocalDate checkInDate);
+    Optional<CheckIn> findTopByUserIdOrderByCheckInDateDesc(Long userId);
+    List<CheckIn> findByUserIdAndCheckInDateBetweenOrderByCheckInDateAsc(
+            Long userId, LocalDate start, LocalDate end);
 }

@@ -229,3 +229,65 @@ input, textarea, button { font-family: inherit; font-size: inherit; }
   .modal-header { margin-bottom: 24px; padding-bottom: 16px; }
   .modal-header h2 { font-size: 1.1rem; }
 }
+/* ── Autopsy Page ────────────────────────────────────── */
+.autopsy-page { display: flex; flex-direction: column; gap: 20px; }
+.autopsy-title-section { display: flex; flex-direction: column; gap: 8px; }
+.autopsy-title-section h1 { font-size: 1.5rem; font-weight: 700; }
+.autopsy-subtitle { color: var(--text2); font-size: 0.875rem; }
+.week-summary-badge { display: inline-flex; background: var(--ember-glow); border: 1px solid var(--ember-dim); color: var(--ember); border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: 500; width: fit-content; }
+
+/* Stats row */
+.autopsy-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 12px; text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1; }
+.stat-unit { font-size: 0.9rem; font-weight: 400; color: var(--text2); }
+.stat-label { font-size: 0.75rem; color: var(--text2); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Cards */
+.autopsy-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.autopsy-card h3 { font-size: 0.9rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+.autopsy-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.autopsy-card.half { gap: 8px; }
+.bw-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+.bw-day { font-size: 1.2rem; font-weight: 600; }
+.bw-sub { font-size: 0.8rem; color: var(--text2); }
+
+/* Energy chart */
+.energy-chart { display: flex; gap: 8px; align-items: flex-end; height: 120px; padding-bottom: 28px; position: relative; }
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.chart-bar-container { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.chart-bar { width: 100%; border-radius: 4px 4px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; transition: height 0.3s ease; min-height: 8px; position: relative; }
+.chart-bar.missed { height: 8px !important; background: var(--border) !important; }
+.bar-emoji { font-size: 0.65rem; }
+.chart-day { font-size: 0.7rem; color: var(--text2); font-weight: 500; }
+.chart-score { font-size: 0.7rem; font-family: 'DM Mono', monospace; font-weight: 600; }
+
+/* Patterns */
+.patterns-list { display: flex; flex-direction: column; gap: 8px; }
+.pattern-item { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.875rem; color: var(--text); line-height: 1.5; }
+
+/* Correlations */
+.correlation-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.875rem; color: var(--text2); padding: 8px 0; border-bottom: 1px solid var(--border); }
+.correlation-item:last-child { border-bottom: none; }
+.corr-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+/* AI card */
+.ai-card { border-color: var(--ember-dim); background: linear-gradient(135deg, var(--bg2), rgba(249,115,22,0.05)); }
+.ai-insight-text { font-size: 0.9rem; line-height: 1.7; color: var(--text); }
+
+/* Habit performance */
+.habit-perf-row { display: flex; gap: 20px; }
+.perf-item { text-align: center; }
+.perf-val { font-size: 1.6rem; font-weight: 700; font-family: 'DM Mono', monospace; }
+.perf-label { font-size: 0.75rem; color: var(--text2); margin-top: 4px; }
+.completion-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.completion-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.completion-fill { height: 100%; background: var(--ember); border-radius: 3px; transition: width 0.5s ease; }
+.completion-pct { font-size: 0.8rem; font-family: 'DM Mono', monospace; color: var(--ember); font-weight: 600; }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .autopsy-stats { grid-template-columns: repeat(2, 1fr); }
+  .energy-chart { gap: 4px; }
+  .bar-emoji { display: none; }
+}

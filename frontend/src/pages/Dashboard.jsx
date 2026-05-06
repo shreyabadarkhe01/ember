@@ -32,9 +32,16 @@ export default function Dashboard() {
 
   const isCheckedInToday = () => {
     if (!latestCheckin) return false;
-    const today = new Date().toDateString();
-    const checkinDate = new Date(latestCheckin.date).toDateString();
-    return today === checkinDate;
+    // Backend returns date as array [year, month, day, ...]
+    const c = latestCheckin.checkInDate || latestCheckin.date;
+    if (!c) return false;
+    if (Array.isArray(c)) {
+      const today = new Date();
+      return c[0] === today.getFullYear() &&
+             c[1] === today.getMonth() + 1 &&
+             c[2] === today.getDate();
+    }
+    return new Date(c).toDateString() === new Date().toDateString();
   };
 
   const getGreeting = () => {
