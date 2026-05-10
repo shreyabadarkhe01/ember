@@ -60,6 +60,16 @@ export const autopsyApi = {
   get: (userId) => api.get(`/api/users/${userId}/autopsy`),
 };
 
+export const nudgeApi = {
+  // POST /api/users/{id}/ai/nudge
+  getNudge: (userId, body) =>
+    api.post(`/api/users/${userId}/ai/nudge`, body),
+
+  // GET /api/users/{id}/ai/autopsy-insight
+  getAutopsyInsight: (userId) =>
+    api.get(`/api/users/${userId}/ai/autopsy-insight`),
+};
+
 
 
 export default api;

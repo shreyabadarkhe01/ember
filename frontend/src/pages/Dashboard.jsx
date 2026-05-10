@@ -4,6 +4,8 @@ import { habitApi, checkinApi } from '../services/api';
 import CheckInForm from '../components/CheckInForm';
 import HabitList from '../components/HabitList';
 import HabitForm from '../components/HabitForm';
+import NudgeCard from "../components/Nudgecard";
+
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -12,6 +14,7 @@ export default function Dashboard() {
   const [showCheckin, setShowCheckin] = useState(false);
   const [showHabitForm, setShowHabitForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [nudge, setNudge] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -85,17 +88,20 @@ export default function Dashboard() {
         </div>
 
         {/* Check-in section */}
-        {!isCheckedInToday() && (
-          <div>
-            {showCheckin ? (
-              <CheckInForm onSuccess={() => { setShowCheckin(false); fetchData(); }} />
-            ) : (
-              <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
-                ✨ Check in for today
-              </button>
-            )}
-          </div>
-        )}
+         {!isCheckedInToday() && (
+           <div>
+             {showCheckin ? (
+               <CheckInForm onSuccess={(nudgeMessage) => { setShowCheckin(false); fetchData(); setNudge(nudgeMessage); }} />
+             ) : (
+               <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
+                 ✨ Check in for today
+               </button>
+             )}
+           </div>
+         )}
+
+            {/* Nudge card */}
+            {nudge && <NudgeCard nudge={nudge} onDismiss={() => setNudge(null)} />}
 
         {/* Habits section */}
         <div className="habits-section">

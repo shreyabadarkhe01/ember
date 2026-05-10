@@ -1,6 +1,7 @@
 package com.ember.backend.autopsy;
 
-import com.ember.backend.ai.ClaudeService;
+//import com.ember.backend.ai.ClaudeService;
+import com.ember.backend.ai.OpenAIService;
 import com.ember.backend.checkin.CheckIn;
 import com.ember.backend.checkin.CheckInRepository;
 import com.ember.backend.common.AppException;
@@ -27,7 +28,7 @@ public class AutopsyService {
     private final CheckInRepository checkInRepository;
     private final HabitRepository habitRepository;
     private final UserRepository userRepository;
-    private final ClaudeService claudeService;
+    private final OpenAIService openAIService;
 
     /**
      * Generate a full weekly autopsy report for a user.
@@ -153,7 +154,7 @@ public class AutopsyService {
         try {
             String userName = userRepository.findById(userId)
                     .get().getName().split(" ")[0];
-            String insight = claudeService.generateAutopsyInsight(userName, autopsy);
+            String insight = openAIService.generateAutopsyInsight(userName, autopsy);
             autopsy.setAiInsight(insight);
         } catch (Exception e) {
             log.warn("Claude insight generation failed, continuing without it");

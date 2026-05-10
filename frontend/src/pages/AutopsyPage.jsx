@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { autopsyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import AutopsyInsightCard from "../components/Autopsyinsightcard";
 
 const ENERGY_COLORS = {
   1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#22c55e'
@@ -158,6 +159,8 @@ export default function AutopsyPage() {
                   <div className="bw-sub">{autopsy.lowEnergyDays} low energy days</div>
                 </div>
               </div>
+
+                <AutopsyInsightCard userId={user.id} />
 
               {/* Patterns */}
               {autopsy.patterns?.length > 0 && (

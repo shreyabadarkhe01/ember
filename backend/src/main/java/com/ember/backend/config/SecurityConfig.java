@@ -84,8 +84,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // Allow OPTIONS for CORS preflight
+                        .requestMatchers("OPTIONS", "/**").permitAll()
                         // Public endpoints
                         .requestMatchers(
                                 "/api/auth/**",
@@ -113,10 +117,12 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",   // Vite dev server
                 "http://localhost:3000",   // fallback
-                "https://*.vercel.app"     // production (update with your Vercel domain)
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:3000"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
