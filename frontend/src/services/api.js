@@ -43,9 +43,12 @@ export const habitApi = {
   create: (userId, data) => api.post(`/api/users/${userId}/habits`, data),
   update: (userId, habitId, data) => api.patch(`/api/users/${userId}/habits/${habitId}`, data),
 
-  complete: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/complete`),
-  skip: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/skip`),
-   reset: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/reset`),
+   complete: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/complete`),
+   skip: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/skip`),
+    reset: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/reset`),
+    scale:    (userId, habitId, score) => api.patch(`/api/users/${userId}/habits/${habitId}/scale`, { energyScore: score }),
+    archive:  (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/archive`),
+    unarchive: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/unarchive`),
 };
 
 // ─── Check-ins ───────────────────────────────────────

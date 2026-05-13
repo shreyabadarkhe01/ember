@@ -5,6 +5,7 @@ import CheckInForm from '../components/CheckInForm';
 import HabitList from '../components/HabitList';
 import HabitForm from '../components/HabitForm';
 import NudgeCard from "../components/Nudgecard";
+import Navbar from '../components/Navbar';
 
 
 export default function Dashboard() {
@@ -60,18 +61,10 @@ export default function Dashboard() {
   if (loading) return <div className="loading-screen"><div className="loader">🔥</div></div>;
 
   return (
-    <div className="dashboard">
-
-      {/* Header */}
-      <header className="dash-header">
-        <div className="dash-brand">🔥 ember</div>
-        <div className="dash-user">
-          <span>{user.name}</span>
-          <button className="btn-logout" onClick={logout}>Sign out</button>
-        </div>
-      </header>
-
-      <main className="dash-main">
+    <>
+      <Navbar />
+      <div className="dashboard">
+        <main className="dash-main">
 
         {/* Greeting + energy */}
         <div className="dash-greeting">
@@ -136,5 +129,6 @@ export default function Dashboard() {
 
       </main>
     </div>
+    </>
   );
 }

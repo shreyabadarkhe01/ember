@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { habitApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-export default function HabitForm({ onSuccess, onCancel }) {
+// habit prop = existing habit object → edit mode
+// habit prop = undefined/null         → create mode
+export default function HabitForm({ habit, onSuccess, onCancel }) {
   const { user } = useAuth();
+  const isEditing = !!habit;
+
   const [form, setForm] = useState({
-    name: '',
-    minimalVersion: '',  // low energy
-    liteVersion: '',     // normal day
-    fullVersion: '',     // high energy
+    name:           habit?.name           ?? '',
+    minimalVersion: habit?.minimalVersion ?? '',
+    liteVersion:    habit?.liteVersion    ?? '',
+    fullVersion:    habit?.fullVersion    ?? '',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]     = useState('');
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -20,15 +24,26 @@ export default function HabitForm({ onSuccess, onCancel }) {
     setError('');
     setLoading(true);
     try {
-      await habitApi.create(user.id, {
-        name: form.name,
-        minimalVersion: form.minimalVersion,
-        liteVersion: form.liteVersion,
-        fullVersion: form.fullVersion,
-      });
+      if (isEditing) {
+        // PATCH /api/users/{id}/habits/{habitId}
+        await habitApi.update(user.id, habit.id, {
+          name:           form.name,
+          minimalVersion: form.minimalVersion,
+          liteVersion:    form.liteVersion,
+          fullVersion:    form.fullVersion,
+        });
+      } else {
+        // POST /api/users/{id}/habits
+        await habitApi.create(user.id, {
+          name:           form.name,
+          minimalVersion: form.minimalVersion,
+          liteVersion:    form.liteVersion,
+          fullVersion:    form.fullVersion,
+        });
+      }
       onSuccess?.();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create habit.');
+      setError(err.response?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} habit.`);
     } finally {
       setLoading(false);
     }
@@ -36,8 +51,12 @@ export default function HabitForm({ onSuccess, onCancel }) {
 
   return (
     <div className="habit-form-card">
-      <h3>New Habit</h3>
-      <p className="form-hint">Set 3 versions — Ember picks the right one based on your energy each day</p>
+      <h3>{isEditing ? 'Edit Habit' : 'New Habit'}</h3>
+      <p className="form-hint">
+        {isEditing
+          ? 'Update the versions — Ember will use the new values from tomorrow'
+          : 'Set 3 versions — Ember picks the right one based on your energy each day'}
+      </p>
 
       <form onSubmit={handleSubmit}>
         <div className="field">
@@ -47,17 +66,6 @@ export default function HabitForm({ onSuccess, onCancel }) {
             placeholder="e.g. Morning run, Read, Meditate"
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label>Unit</label>
-          <input
-            type="text"
-            placeholder="e.g. minutes, pages, km, reps"
-            value={form.unit}
-            onChange={(e) => set('unit', e.target.value)}
             required
           />
         </div>
@@ -100,7 +108,7 @@ export default function HabitForm({ onSuccess, onCancel }) {
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Saving…' : 'Add habit'}
+            {loading ? 'Saving…' : isEditing ? 'Save changes' : 'Add habit'}
           </button>
         </div>
       </form>

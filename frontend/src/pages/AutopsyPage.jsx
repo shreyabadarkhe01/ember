@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { autopsyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AutopsyInsightCard from "../components/Autopsyinsightcard";
+import Navbar from '../components/Navbar';
 
 const ENERGY_COLORS = {
   1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#22c55e'
@@ -40,19 +41,10 @@ export default function AutopsyPage() {
   );
 
   return (
-    <div className="dashboard">
-
-      {/* Header */}
-      <header className="dash-header">
-        <div className="dash-brand">🔥 ember</div>
-        <div className="dash-user">
-          <button className="btn-logout" onClick={() => navigate('/dashboard')}>
-            ← Back
-          </button>
-        </div>
-      </header>
-
-      <main className="dash-main">
+    <>
+      <Navbar />
+      <div className="dashboard">
+        <main className="dash-main">
 
         <div className="autopsy-page">
 
@@ -242,6 +234,7 @@ export default function AutopsyPage() {
         </div>
       </main>
     </div>
+    </>
   );
 }
 

@@ -26,6 +26,14 @@ a { color: var(--ember); text-decoration: none; }
 a:hover { text-decoration: underline; }
 input, textarea, button { font-family: inherit; font-size: inherit; }
 
+/* Remove underlines from all clickable elements */
+button, .btn-primary, .btn-secondary, .btn-logout, .btn-checkin, .btn-add, .btn-done, .btn-skip, .btn-close, input[type="submit"], input[type="button"], a {
+  text-decoration: none !important;
+}
+button:hover, .btn-primary:hover, .btn-secondary:hover, .btn-logout:hover, .btn-checkin:hover, .btn-add:hover, .btn-done:hover, .btn-skip:hover, .btn-close:hover, a:hover {
+  text-decoration: none !important;
+}
+
 /* ── Loading ─────────────────────────────────────────── */
 .loading-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .loader { font-size: 2.5rem; animation: pulse 1.2s ease-in-out infinite; }

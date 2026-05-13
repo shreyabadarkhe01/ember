@@ -63,4 +63,18 @@ public class HabitController {
         return ResponseEntity.ok(habitService.resetHabit(habitId));
     }
 
+    @PatchMapping("/{userId}/habits/{habitId}/archive")
+    public ResponseEntity<HabitDto> archiveHabit(
+            @PathVariable Long userId,
+            @PathVariable Long habitId) {
+        return ResponseEntity.ok(habitService.archiveHabit(userId, habitId));
+    }
+
+    @PatchMapping("/{userId}/habits/{habitId}/unarchive")
+    public ResponseEntity<HabitDto> unarchiveHabit(
+            @PathVariable Long userId,
+            @PathVariable Long habitId) {
+        return ResponseEntity.ok(habitService.unarchiveHabit(userId, habitId));
+    }
+
 }

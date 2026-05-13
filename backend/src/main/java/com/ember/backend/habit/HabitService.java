@@ -2,6 +2,7 @@ package com.ember.backend.habit;
 
 import com.ember.backend.common.AppException;
 import com.ember.backend.user.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -78,5 +79,25 @@ public class HabitService {
         }
         habit.setStatus(HabitStatus.ACTIVE);
         return habitMapper.toDto(habitRepository.save(habit));
+    }
+
+    @Transactional
+    public HabitDto archiveHabit(Long userId, Long habitId) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+
+        habit.setStatus(HabitStatus.ARCHIVED);
+        Habit saved = habitRepository.save(habit);
+        return habitMapper.toDto(saved);
+    }
+
+    @Transactional
+    public HabitDto unarchiveHabit(Long userId, Long habitId) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
+                .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+
+        habit.setStatus(HabitStatus.ACTIVE);
+        Habit saved = habitRepository.save(habit);
+        return habitMapper.toDto(saved);
     }
 }

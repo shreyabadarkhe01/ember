@@ -5,6 +5,7 @@ import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import './index.css';
 import AutopsyPage from './pages/AutopsyPage';
+import AboutPage from './pages/AboutPage';
 
 
 function ProtectedRoute({ children }) {
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
           <Route path="/autopsy" element={<ProtectedRoute><AutopsyPage /></ProtectedRoute>} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
