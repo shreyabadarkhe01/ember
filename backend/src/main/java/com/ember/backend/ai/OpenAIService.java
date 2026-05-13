@@ -286,6 +286,20 @@ public class OpenAIService {
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
     private static final String MODEL   = "gpt-4.1-nano";
 
+    private static final String NUDGE_SYSTEM_PROMPT =
+            "You are Ember, a habit coach. Send a punchy daily nudge — exactly 4 lines, " +
+                    "1 emoji at the start of each line. Line 1: energy level + which version tier to use. " +
+                    "Line 2: first habit to do with its exact version text. " +
+                    "Line 3: second habit or streak warning. " +
+                    "Line 4: one motivational closer, max 8 words. " +
+                    "No bullet points. No sentences longer than 12 words.";
+
+    private static final String AUTOPSY_SYSTEM_PROMPT =
+            "You are Ember, a data-driven habit coach. Analyze the user's weekly data and write " +
+                    "a clear 3-4 sentence insight paragraph. Focus on patterns in their numbers — energy trends, " +
+                    "consistency score, completion rate. Acknowledge one specific win, identify one pattern, " +
+                    "suggest one concrete adjustment for next week. Be honest and specific, not generic.2-3 emojis overall.";
+
     @Value("${openai.api.key:}")
     private String apiKey;
 
@@ -311,13 +325,9 @@ public class OpenAIService {
      * @param habits       list of the user's active habits with all 3 versions
      */
     public String generateNudge(int energyScore, Double sleepHours, Integer hrvMs, List<HabitContext> habits) {
-        if (!isConfigured()) {
-            log.warn("OpenAI API key not configured — returning fallback nudge");
-            return getFallbackNudge(energyScore, habits);
-        }
-
-        String prompt = buildNudgePrompt(energyScore, sleepHours, hrvMs, habits);
-        return callOpenAI(prompt, 250);
+        if (!isConfigured()) return getFallbackNudge(energyScore, habits);
+        String userPrompt = buildNudgePrompt(energyScore, sleepHours, hrvMs, habits);
+        return callOpenAI(NUDGE_SYSTEM_PROMPT, userPrompt, 120); // 120 tokens — short nudge
     }
 
     /**
@@ -328,23 +338,19 @@ public class OpenAIService {
      * @return A short paragraph of insight, never null
      */
     public String generateAutopsyInsight(String userName, AutopsyDto autopsy) {
-        if (!isConfigured()) {
-            log.warn("OpenAI API key not configured — returning fallback autopsy insight");
-            return getFallbackAutopsyInsight();
-        }
-
-        String prompt = buildAutopsyPrompt(userName, autopsy);
-        return callOpenAI(prompt, 300);
+        if (!isConfigured()) return getFallbackAutopsyInsight();
+        String userPrompt = buildAutopsyPrompt(userName, autopsy);
+        return callOpenAI(AUTOPSY_SYSTEM_PROMPT, userPrompt, 300); // 300 tokens — full paragraph
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Core HTTP call
     // ─────────────────────────────────────────────────────────────────────────
 
-    private String callOpenAI(String userPrompt, int maxTokens) {
+    private String callOpenAI(String systemPrompt, String userPrompt, int maxTokens) {
         try {
             HttpHeaders headers = buildHeaders();
-            ObjectNode body     = buildRequestBody(userPrompt, maxTokens);
+            ObjectNode body     = buildRequestBody(systemPrompt, userPrompt, maxTokens);
 
             HttpEntity<String> request = new HttpEntity<>(
                     objectMapper.writeValueAsString(body), headers
@@ -373,7 +379,7 @@ public class OpenAIService {
         return headers;
     }
 
-    private ObjectNode buildRequestBody(String userPrompt, int maxTokens) {
+    private ObjectNode buildRequestBody(String systemPrompt, String userPrompt, int maxTokens) {
         ObjectNode body = objectMapper.createObjectNode();
         body.put("model", MODEL);
         body.put("max_tokens", maxTokens);
@@ -382,14 +388,7 @@ public class OpenAIService {
 
         ObjectNode systemMsg = objectMapper.createObjectNode();
         systemMsg.put("role", "system");
-        systemMsg.put("content",
-                "You are Ember, a smart habit coach inside a mobile app. " +
-                        "Your job is to send Duolingo-style notifications — short, punchy, and actionable. " +
-                        "Always tell the user WHICH habit version to do (minimal/lite/full) based on their energy, " +
-                        "suggest a natural order to do them in, and mention streaks when they matter. " +
-                        "Write in 3–5 sentences max. No bullet points. Use 1–2 emojis naturally. " +
-                        "Be warm and direct — like a coach, not just a cheerleader."
-        );
+        systemMsg.put("content", systemPrompt); // ← was hardcoded before
         messages.add(systemMsg);
 
         ObjectNode userMsg = objectMapper.createObjectNode();

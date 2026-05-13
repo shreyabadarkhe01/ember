@@ -1,22 +1,21 @@
 import { useState } from 'react';
-import { checkinApi } from '../services/api';
+import { checkinApi, nudgeApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-// Energy level labels — matches your backend enum/scaling logic
 const ENERGY_LEVELS = [
-  { score: 1, label: 'Exhausted',   emoji: '😴', color: '#ef4444', desc: 'Rest mode — minimal habits only' },
-  { score: 2, label: 'Low',         emoji: '😔', color: '#f97316', desc: 'Light habits — be gentle today' },
-  { score: 3, label: 'Moderate',    emoji: '😐', color: '#eab308', desc: 'Standard habits — steady pace' },
-  { score: 4, label: 'Good',        emoji: '😊', color: '#84cc16', desc: 'Full habits — you\'ve got this' },
-  { score: 5, label: 'Energised',   emoji: '🔥', color: '#22c55e', desc: 'Challenge mode — push further' },
+  { score: 1, label: 'Exhausted',  emoji: '😴', color: '#ef4444', desc: 'Rest mode — minimal habits only' },
+  { score: 2, label: 'Low',        emoji: '😔', color: '#f97316', desc: 'Light habits — be gentle today' },
+  { score: 3, label: 'Moderate',   emoji: '😐', color: '#eab308', desc: 'Standard habits — steady pace' },
+  { score: 4, label: 'Good',       emoji: '😊', color: '#84cc16', desc: 'Full habits — you\'ve got this' },
+  { score: 5, label: 'Energised',  emoji: '🔥', color: '#22c55e', desc: 'Challenge mode — push further' },
 ];
 
 export default function CheckInForm({ onSuccess }) {
   const { user } = useAuth();
   const [energy, setEnergy] = useState(3);
-  const [note, setNote] = useState('');
+  const [note, setNote]     = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
 
   const selected = ENERGY_LEVELS[energy - 1];
 
@@ -24,9 +23,26 @@ export default function CheckInForm({ onSuccess }) {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     try {
-      await checkinApi.create(user.id, { energyScore: energy, note });
-      onSuccess?.();
+      // 1. Save the check-in
+      await checkinApi.create(user.id, { energyScore: energy, notes: note });
+
+      // 2. Fetch nudge — non-critical, failure doesn't break check-in
+      let nudgeMessage = null;
+      try {
+        const nudgeRes = await nudgeApi.getNudge(user.id, { energyScore: energy });
+        // Backend returns plain string or { nudge: "..." } — handle both
+        nudgeMessage = typeof nudgeRes.data === 'string'
+          ? nudgeRes.data
+          : nudgeRes.data?.nudge ?? nudgeRes.data?.message ?? null;
+      } catch (nudgeErr) {
+        console.warn('Nudge fetch failed (non-critical):', nudgeErr);
+      }
+
+      // 3. Pass nudge message up to Dashboard
+      onSuccess?.(nudgeMessage);
+
     } catch (err) {
       setError(err.response?.data?.message || 'Check-in failed. Try again.');
     } finally {
@@ -38,7 +54,7 @@ export default function CheckInForm({ onSuccess }) {
     <div className="checkin-card">
       <div className="checkin-header">
         <h2>How are you feeling today?</h2>
-        {/* 
+        {/*
           🔮 FUTURE: This section will be replaced by Samsung Health auto-detection.
           The energyScore will be calculated from sleep + HRV + resting heart rate
           and pre-filled automatically. The user can still override.

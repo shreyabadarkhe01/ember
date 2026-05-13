@@ -15,7 +15,33 @@ export default function Dashboard() {
   const [showCheckin, setShowCheckin] = useState(false);
   const [showHabitForm, setShowHabitForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [nudge, setNudge] = useState(null);
+  const [nudge, setNudge] = useState(() => sessionStorage.getItem('ember_nudge') || null);
+
+  const updateNudge = (message) => {
+    if (message) sessionStorage.setItem('ember_nudge', message);
+    // ← no removeItem here anymore
+    setNudge(message);
+  };
+
+  // Separate function for explicit user dismiss (✕ button)
+  const dismissNudge = () => {
+    sessionStorage.removeItem('ember_nudge'); // permanent dismiss
+    setNudge(null);
+  };
+
+  // useEffect — only hides/shows state, never touches sessionStorage
+  useEffect(() => {
+    if (!habits.length) return;
+
+    const activeHabits = habits.filter(h => h.status === 'ACTIVE');
+    const stored = sessionStorage.getItem('ember_nudge');
+
+    if (activeHabits.length === 0) {
+      setNudge(null); // hide nudge in UI — but key stays in sessionStorage
+    } else if (stored && !nudge) {
+      setNudge(stored); // restore from storage when active habit exists again
+    }
+  }, [habits]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = useCallback(async () => {
     try {
@@ -33,6 +59,8 @@ export default function Dashboard() {
   }, [user.id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+
 
   const isCheckedInToday = () => {
     if (!latestCheckin) return false;
@@ -84,7 +112,7 @@ export default function Dashboard() {
          {!isCheckedInToday() && (
            <div>
              {showCheckin ? (
-               <CheckInForm onSuccess={(nudgeMessage) => { setShowCheckin(false); fetchData(); setNudge(nudgeMessage); }} />
+               <CheckInForm onSuccess={(nudgeMessage) => { setShowCheckin(false); fetchData(); updateNudge(nudgeMessage); }} />
              ) : (
                <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
                  ✨ Check in for today
@@ -93,8 +121,13 @@ export default function Dashboard() {
            </div>
          )}
 
-            {/* Nudge card */}
-            {nudge && <NudgeCard nudge={nudge} onDismiss={() => setNudge(null)} />}
+        {/* Nudge card - appears below check-in form */}
+        {nudge && <NudgeCard nudge={nudge} onDismiss={dismissNudge} />}
+{/*         {nudge && ( */}
+{/*           <div className="nudge-section"> */}
+{/*             <NudgeCard nudge={nudge} onDismiss={() => updateNudge(null)} /> */}
+{/*           </div> */}
+{/*         )} */}
 
         {/* Habits section */}
         <div className="habits-section">

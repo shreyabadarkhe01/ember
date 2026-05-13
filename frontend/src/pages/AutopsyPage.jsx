@@ -181,13 +181,6 @@ export default function AutopsyPage() {
                 </div>
               </div>
 
-              {/* AI Insight */}
-              {autopsy.aiInsight && (
-                <div className="autopsy-card ai-card">
-                  <h3>🤖 AI Insight</h3>
-                  <p className="ai-insight-text">{autopsy.aiInsight}</p>
-                </div>
-              )}
 
               {/* Habit performance */}
               <div className="autopsy-card">
