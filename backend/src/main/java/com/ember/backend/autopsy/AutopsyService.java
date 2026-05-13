@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import com.ember.backend.habitlog.HabitLog;
+import com.ember.backend.habitlog.HabitLogRepository;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -29,6 +31,7 @@ public class AutopsyService {
     private final HabitRepository habitRepository;
     private final UserRepository userRepository;
     private final OpenAIService openAIService;
+    private final HabitLogRepository habitLogRepository;
 
     /**
      * Generate a full weekly autopsy report for a user.
@@ -99,14 +102,24 @@ public class AutopsyService {
         // Count habits by status across all check-ins this week
 
         log.info("Habit performance...");
+        LocalDate to   = LocalDate.now();
+        LocalDate from = to.minusDays(6); // last 7 days
+
+        List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
+
+        long totalLogs  = logs.size();
+        long doneLogs   = logs.stream().filter(l -> l.getStatus() == HabitStatus.DONE).count();
+        long skippedLogs = logs.stream().filter(l -> l.getStatus() == HabitStatus.SKIPPED).count();
+
+        double habitCompletionRate = totalLogs > 0
+            ? Math.round((doneLogs * 100.0 / totalLogs) * 10.0) / 10.0
+            : 0.0;
+
         List<Habit> activeHabits = habits.stream()
                 .filter(h -> h.getStatus() == HabitStatus.ACTIVE)
                 .collect(Collectors.toList());
-        long totalDone = 0; // Placeholder: not implemented yet
-        long totalSkipped = 0; // Placeholder: not implemented yet
         int totalHabits = activeHabits.size();
-        int completionRate = 0; // Placeholder
-        log.info("Done habits: {}", totalDone);
+        log.info("Done habits: {}", doneLogs);
 
         // ── Pattern detection ────────────────────────────────────────
         log.info("Detecting patterns...");
@@ -139,10 +152,10 @@ public class AutopsyService {
                 .lowEnergyDays((int) lowEnergyDays)
                 .totalCheckIns(totalCheckIns)
                 .consistencyScore(consistencyScore)
-                .habitCompletionRate(completionRate)
+                .habitCompletionRate((int) Math.round(habitCompletionRate))
                 .totalHabitsAssigned(totalHabits)
-                .totalHabitsDone((int) totalDone)
-                .totalHabitsSkipped((int) totalSkipped)
+                .totalHabitsDone((int) doneLogs)
+                .totalHabitsSkipped((int) skippedLogs)
                 .energyByDay(energyByDay)
                 .patterns(patterns)
                 .sleepCorrelation(sleepCorrelation)

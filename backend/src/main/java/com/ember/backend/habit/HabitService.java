@@ -1,11 +1,15 @@
 package com.ember.backend.habit;
 
 import com.ember.backend.common.AppException;
+import com.ember.backend.habitlog.HabitLog;
+import com.ember.backend.habitlog.HabitLogRepository;
 import com.ember.backend.user.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +18,7 @@ import java.util.stream.Collectors;
 public class HabitService {
 
     private final HabitRepository habitRepository;
+    private final HabitLogRepository habitLogRepository;
     private final UserRepository userRepository;
     private final HabitMapper habitMapper;
 
@@ -45,19 +50,53 @@ public class HabitService {
         return habitMapper.toDto(habit); // HabitDto should include scaledVersion
     }
 
-    public HabitDto completeHabit(Long habitId) {
-        var habit = habitRepository.findById(habitId)
+    @Transactional
+    public HabitDto completeHabit(Long userId, Long habitId) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+
         habit.setStatus(HabitStatus.DONE);
         habit.setStreakCount(habit.getStreakCount() + 1);
-        return habitMapper.toDto(habitRepository.save(habit));
+        Habit saved = habitRepository.save(habit);
+
+        // Log to HabitLog — only if not already logged today
+        habitLogRepository.findByHabitIdAndDate(habitId, LocalDate.now())
+                .ifPresentOrElse(
+                        existing -> {}, // already logged, skip
+                        () -> habitLogRepository.save(HabitLog.builder()
+                                .userId(userId)
+                                .habitId(habitId)
+                                .habitName(habit.getName())
+                                .date(LocalDate.now())
+                                .status(HabitStatus.DONE)
+                                .build())
+                );
+
+        return habitMapper.toDto(saved);
     }
 
-    public HabitDto skipHabit(Long habitId) {
-        var habit = habitRepository.findById(habitId)
+    @Transactional
+    public HabitDto skipHabit(Long userId, Long habitId) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
+
         habit.setStatus(HabitStatus.SKIPPED);
-        return habitMapper.toDto(habitRepository.save(habit));
+        Habit saved = habitRepository.save(habit);
+
+        // Log skip
+        habitLogRepository.findByHabitIdAndDate(habitId, LocalDate.now())
+                .ifPresentOrElse(
+                        existing -> {},
+                        () -> habitLogRepository.save(HabitLog.builder()
+                                .userId(userId)
+                                .habitId(habitId)
+                                .habitName(habit.getName())
+                                .date(LocalDate.now())
+                                .status(HabitStatus.SKIPPED)
+                                .build())
+                );
+
+        return habitMapper.toDto(saved);
     }
 
     public HabitDto updateHabit(Long habitId, HabitDto dto) {

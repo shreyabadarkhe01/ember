@@ -38,14 +38,14 @@ public class HabitController {
     public ResponseEntity<HabitDto> completeHabit(
             @PathVariable Long userId,
             @PathVariable Long habitId) {
-        return ResponseEntity.ok(habitService.completeHabit(habitId));
+        return ResponseEntity.ok(habitService.completeHabit(userId, habitId));
     }
 
     @PatchMapping("/{userId}/habits/{habitId}/skip")
     public ResponseEntity<HabitDto> skipHabit(
             @PathVariable Long userId,
             @PathVariable Long habitId) {
-        return ResponseEntity.ok(habitService.skipHabit(habitId));
+        return ResponseEntity.ok(habitService.skipHabit(userId, habitId));
     }
 
     @PatchMapping("/{userId}/habits/{habitId}")
