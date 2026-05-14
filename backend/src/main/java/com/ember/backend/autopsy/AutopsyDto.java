@@ -48,9 +48,10 @@ public class AutopsyDto {
 
     // ── Habit Performance ────────────────────────────
     private Integer habitCompletionRate; // percentage of habits marked DONE
-    private Integer totalHabitsAssigned; // total habits across all days
     private Integer totalHabitsDone;     // habits marked DONE
     private Integer totalHabitsSkipped;  // habits marked SKIPPED
+    private List<HabitWeeklySummaryDto> habitSummaries; // per-habit weekly breakdown
+    private Integer activeHabitCount; // habits excluding archived, for label context
 
     // ── Daily Breakdown ──────────────────────────────
     private List<DailyEnergyDto> energyByDay; // energy score per day

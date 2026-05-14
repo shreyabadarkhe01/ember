@@ -1,5 +1,7 @@
 package com.ember.backend.habit;
 
+import com.ember.backend.habitlog.CompletionDetailsRequest;
+import com.ember.backend.habitlog.HabitLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import java.util.List;
 public class HabitController {
 
     private final HabitService habitService;
+    private final HabitLogService habitLogService;
 
     @PostMapping("/{userId}/habits")
     public ResponseEntity<HabitDto> createHabit(
@@ -75,6 +78,20 @@ public class HabitController {
             @PathVariable Long userId,
             @PathVariable Long habitId) {
         return ResponseEntity.ok(habitService.unarchiveHabit(userId, habitId));
+    }
+    
+    @PatchMapping("/{userId}/habits/{habitId}/log-completion")
+    public ResponseEntity<Void> logCompletionDetails(
+            @PathVariable Long userId,
+            @PathVariable Long habitId,
+            @RequestBody CompletionDetailsRequest request) {
+        habitLogService.updateCompletionDetails(
+                userId,
+                habitId,
+                request.getCompletionRatio(),
+                request.getFeelingTag()
+        );
+        return ResponseEntity.ok().build();
     }
 
 }

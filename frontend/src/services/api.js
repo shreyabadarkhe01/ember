@@ -49,6 +49,8 @@ export const habitApi = {
     scale:    (userId, habitId, score) => api.patch(`/api/users/${userId}/habits/${habitId}/scale`, { energyScore: score }),
     archive:  (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/archive`),
     unarchive: (userId, habitId) => api.patch(`/api/users/${userId}/habits/${habitId}/unarchive`),
+    logCompletion: (userId, habitId, body) =>
+      api.patch(`/api/users/${userId}/habits/${habitId}/log-completion`, body),
 };
 
 // ─── Check-ins ───────────────────────────────────────

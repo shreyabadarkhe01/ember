@@ -101,6 +101,7 @@ package com.ember.backend.ai;
 
 import com.ember.backend.autopsy.AutopsyDto;
 import com.ember.backend.autopsy.AutopsyService;
+import com.ember.backend.checkin.CheckInService;
 import com.ember.backend.common.AppException;
 import com.ember.backend.habit.Habit;
 import com.ember.backend.habit.HabitService;
@@ -135,6 +136,7 @@ public class NudgeController {
     private final HabitService habitService;
     private final AutopsyService autopsyService;
     private final UserRepository userRepository;
+    private final CheckInService checkInService;
 
     /**
      * POST /api/users/{id}/ai/nudge
@@ -168,7 +170,7 @@ public class NudgeController {
                 request.getHrvMs(),
                 habits
         );
-
+        checkInService.saveNudge(id, nudge);
         return ResponseEntity.ok(Map.of("nudge", nudge));
     }
 

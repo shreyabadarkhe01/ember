@@ -182,37 +182,94 @@ export default function AutopsyPage() {
               </div>
 
 
-              {/* Habit performance */}
-              <div className="autopsy-card">
-                <h3>Habit Performance</h3>
-                <div className="habit-perf-row">
-                  <div className="perf-item">
-                    <div className="perf-val" style={{ color: '#22c55e' }}>
-                      {autopsy.totalHabitsDone}
+              {/* Habit Performance */}
+              {autopsy.habitSummaries?.length > 0 && (
+                <div className="autopsy-card">
+                  <h3>Habit Performance</h3>
+
+                  {/* Weekly totals row */}
+                  <div className="habit-perf-row">
+                    <div className="perf-item">
+                      <div className="perf-val" style={{ color: '#22c55e' }}>
+                        {autopsy.totalHabitsDone}
+                      </div>
+                      <div className="perf-label">Done this week</div>
                     </div>
-                    <div className="perf-label">Completed</div>
-                  </div>
-                  <div className="perf-item">
-                    <div className="perf-val" style={{ color: '#f97316' }}>
-                      {autopsy.totalHabitsSkipped}
+
+                    <div className="perf-item">
+                      <div className="perf-val" style={{ color: '#f97316' }}>
+                        {autopsy.totalHabitsSkipped}
+                      </div>
+                      <div className="perf-label">Skipped this week</div>
                     </div>
-                    <div className="perf-label">Skipped</div>
+
+                    <div className="perf-item">
+                      <div className="perf-val" style={{ color: '#22c55e' }}>
+                        {autopsy.habitCompletionRate}
+                        <span className="stat-unit">%</span>
+                      </div>
+                      <div className="perf-label">Completion rate</div>
+                    </div>
                   </div>
-                  <div className="perf-item">
-                    <div className="perf-val">{autopsy.totalHabitsAssigned}</div>
-                    <div className="perf-label">Total</div>
+
+                  {/* Completion bar */}
+                  <div className="completion-bar-wrap">
+                    <div className="completion-bar">
+                      <div
+                        className="completion-fill"
+                        style={{ width: `${autopsy.habitCompletionRate}%` }}
+                      />
+                    </div>
+                    <span className="completion-pct">
+                      {autopsy.habitCompletionRate}%
+                    </span>
+                  </div>
+
+                  {/* Per-habit breakdown */}
+                  <div className="habit-breakdown">
+                    {autopsy.habitSummaries.map((h) => (
+                      <div key={h.habitId} className="habit-summary-row">
+
+                        <div className="habit-summary-left">
+                          <span className="habit-summary-name">{h.habitName}</span>
+
+                          {h.streakCount > 0 && (
+                            <span className="habit-summary-streak">
+                              🔥 {h.streakCount}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="habit-summary-right">
+                          <span
+                            className="habit-summary-status"
+                            style={{
+                              color:
+                                h.todayStatus === 'DONE'
+                                  ? '#22c55e'
+                                  : h.todayStatus === 'SKIPPED'
+                                  ? '#f97316'
+                                  : '#94a3b8'
+                            }}
+                          >
+                            {h.todayStatus === 'DONE'
+                              ? '✅ Done'
+                              : h.todayStatus === 'SKIPPED'
+                              ? '⏭️ Skipped'
+                              : '⏳ Pending'}
+                          </span>
+
+                          <span className="habit-summary-week">
+                            {h.weeklyDone} ✓ · {h.weeklySkipped} ⏭ this week
+                          </span>
+                        </div>
+
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="completion-bar-wrap">
-                  <div className="completion-bar">
-                    <div
-                      className="completion-fill"
-                      style={{ width: `${autopsy.habitCompletionRate}%` }}
-                    />
-                  </div>
-                  <span className="completion-pct">{autopsy.habitCompletionRate}%</span>
-                </div>
-              </div>
+              )}
+              
 
             </>
           )}
@@ -227,6 +284,58 @@ export default function AutopsyPage() {
         </div>
       </main>
     </div>
+
+    <style>{`
+      .habit-breakdown {
+        margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .habit-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+      }
+
+      .habit-summary-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .habit-summary-name {
+        font-size: 14px;
+        color: var(--text);
+      }
+
+      .habit-summary-streak {
+        font-size: 12px;
+        color: #f97316;
+      }
+
+      .habit-summary-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+      }
+
+      .habit-summary-status {
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .habit-summary-week {
+        font-size: 11px;
+        color: var(--text3);
+      }
+    `}</style>
     </>
   );
 }

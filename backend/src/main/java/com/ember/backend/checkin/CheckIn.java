@@ -46,6 +46,9 @@ public class CheckIn {
     @Column(name = "steps")
     private Integer steps;
 
+    @Column(name = "nudge_text", columnDefinition = "TEXT")
+    private String nudgeText;
+
     @Column(name = "calories_burned")
     private Integer caloriesBurned;
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { habitApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import HabitForm from './HabitForm';
+import CompletionDialog from './CompletionDialog';
 
 const STATUS_STYLES = {
   ACTIVE:   { color: '#94a3b8', label: 'Pending',  emoji: '⏳' },
@@ -16,6 +17,7 @@ export default function HabitList({ habits, energyScore, onRefresh }) {
   const [updating, setUpdating]           = useState(null);
   const [editingId, setEditingId]         = useState(null);
   const [confirmArchiveId, setConfirmArchiveId] = useState(null); // ← which habit is pending archive confirm
+  const [completionDialog, setCompletionDialog] = useState(null);
 
   const getScaledVersion = (habit) => {
     if (!energyScore) return habit.liteVersion;
@@ -29,6 +31,9 @@ export default function HabitList({ habits, energyScore, onRefresh }) {
     try {
       await habitApi.complete(user.id, habitId);
       onRefresh?.();
+      // Open dialog after successful completion
+      const habit = habits.find(h => h.id === habitId);
+      setCompletionDialog({ habitId, habitName: habit?.name ?? 'Habit' });
     } catch (err) {
       console.error('Failed to complete habit:', err);
     } finally {
@@ -268,6 +273,13 @@ export default function HabitList({ habits, energyScore, onRefresh }) {
           font-style: italic;
         }
       `}</style>
+      {completionDialog && (
+        <CompletionDialog
+          habitId={completionDialog.habitId}
+          habitName={completionDialog.habitName}
+          onClose={() => setCompletionDialog(null)}
+        />
+      )}
     </div>
   );
 }

@@ -107,19 +107,43 @@ public class AutopsyService {
 
         List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
 
+        // Per-habit weekly summary
+        List<HabitWeeklySummaryDto> habitSummaries = habits.stream()
+                .filter(h -> h.getStatus() != HabitStatus.ARCHIVED)
+                .map(h -> {
+                    int done = (int) logs.stream()
+                            .filter(l -> l.getHabitId().equals(h.getId())
+                                    && l.getStatus() == HabitStatus.DONE)
+                            .count();
+                    int skipped = (int) logs.stream()
+                            .filter(l -> l.getHabitId().equals(h.getId())
+                                    && l.getStatus() == HabitStatus.SKIPPED)
+                            .count();
+                    return HabitWeeklySummaryDto.builder()
+                            .habitId(h.getId())
+                            .habitName(h.getName())
+                            .streakCount(h.getStreakCount())
+                            .todayStatus(h.getStatus().name())
+                            .weeklyDone(done)
+                            .weeklySkipped(skipped)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
         long totalLogs  = logs.size();
         long doneLogs   = logs.stream().filter(l -> l.getStatus() == HabitStatus.DONE).count();
         long skippedLogs = logs.stream().filter(l -> l.getStatus() == HabitStatus.SKIPPED).count();
 
-        double habitCompletionRate = totalLogs > 0
-            ? Math.round((doneLogs * 100.0 / totalLogs) * 10.0) / 10.0
-            : 0.0;
+        long attemptedLogs = doneLogs + skippedLogs;
+        double habitCompletionRate = attemptedLogs > 0
+                ? Math.round((doneLogs * 100.0 / attemptedLogs) * 10.0) / 10.0
+                : 0.0;
 
-        List<Habit> activeHabits = habits.stream()
-                .filter(h -> h.getStatus() == HabitStatus.ACTIVE)
-                .collect(Collectors.toList());
-        int totalHabits = activeHabits.size();
-        log.info("Done habits: {}", doneLogs);
+        int activeHabitCount = (int) habits.stream()
+                .filter(h -> h.getStatus() != HabitStatus.ARCHIVED)
+                .count();
+        int totalHabits = totalCheckIns * activeHabitCount; // total possible completions this week
+//        log.info("Done habits: {}", doneLogs);
 
         // ── Pattern detection ────────────────────────────────────────
         log.info("Detecting patterns...");
@@ -153,9 +177,10 @@ public class AutopsyService {
                 .totalCheckIns(totalCheckIns)
                 .consistencyScore(consistencyScore)
                 .habitCompletionRate((int) Math.round(habitCompletionRate))
-                .totalHabitsAssigned(totalHabits)
                 .totalHabitsDone((int) doneLogs)
                 .totalHabitsSkipped((int) skippedLogs)
+                .habitSummaries(habitSummaries)
+                .activeHabitCount(activeHabitCount)
                 .energyByDay(energyByDay)
                 .patterns(patterns)
                 .sleepCorrelation(sleepCorrelation)
@@ -183,42 +208,6 @@ public class AutopsyService {
      * Build a DailyEnergyDto for each day in the week,
      * including days where user didn't check in (checkedIn = false).
      */
-//    private List<DailyEnergyDto> buildDailyBreakdown(
-//            LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns) {
-//
-//        // Map check-ins by date for quick lookup
-//        Map<LocalDate, CheckIn> checkInMap = checkIns.stream()
-//                .collect(Collectors.toMap(CheckIn::getCheckInDate, c -> c));
-//
-//        List<DailyEnergyDto> days = new ArrayList<>();
-//        LocalDate current = weekStart;
-//
-//        while (!current.isAfter(weekEnd)) {
-//            CheckIn checkIn = checkInMap.get(current);
-//            String dayName = current.getDayOfWeek()
-//                    .getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-//
-//            DailyEnergyDto.DailyEnergyDtoBuilder builder = DailyEnergyDto.builder()
-//                    .date(current)
-//                    .dayName(dayName)
-//                    .checkedIn(checkIn != null);
-//
-//            if (checkIn != null) {
-//                builder.energyScore(checkIn.getEnergyScore())
-//                        .source(checkIn.getSource());
-//                // Add biometric data if available on CheckIn entity
-//                // builder.sleepHours(checkIn.getSleepHours());
-//                // builder.hrvMs(checkIn.getHrvMs());
-//                // builder.restingHeartRate(checkIn.getRestingHeartRate());
-//                // builder.steps(checkIn.getSteps());
-//            }
-//
-//            days.add(builder.build());
-//            current = current.plusDays(1);
-//        }
-//
-//        return days;
-//    }
 
     private List<DailyEnergyDto> buildDailyBreakdown(
             LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns) {

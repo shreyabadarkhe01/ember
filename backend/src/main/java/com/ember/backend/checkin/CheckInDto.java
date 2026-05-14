@@ -15,4 +15,5 @@ public class CheckInDto {
     private Long userId;
     private String message;
     private List<HabitDto> scaledHabits;
+    private String nudgeText;
 }

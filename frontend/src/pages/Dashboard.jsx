@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [showCheckin, setShowCheckin] = useState(false);
   const [showHabitForm, setShowHabitForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [nudge, setNudge] = useState(() => sessionStorage.getItem('ember_nudge') || null);
+  const [nudge, setNudge] = useState(null);
 
   const updateNudge = (message) => {
     if (message) sessionStorage.setItem('ember_nudge', message);
@@ -49,8 +49,21 @@ export default function Dashboard() {
         habitApi.getAll(user.id),
         checkinApi.getLatest(user.id).catch(() => ({ data: null })),
       ]);
-      setHabits(habitsRes.data);
-      setLatestCheckin(checkinRes.data);
+
+      const fetchedHabits = habitsRes.data;
+      const checkin = checkinRes.data;
+
+      setHabits(fetchedHabits);
+      setLatestCheckin(checkin);
+
+      // Show nudge only if: nudge exists + at least one habit is not DONE
+      const hasActiveHabits = fetchedHabits.some(h => h.status !== 'DONE');
+      if (checkin?.nudgeText && hasActiveHabits) {
+        setNudge(checkin.nudgeText);
+      } else {
+        setNudge(null);
+      }
+
     } catch (err) {
       console.error('Failed to load dashboard:', err);
     } finally {
@@ -112,7 +125,7 @@ export default function Dashboard() {
          {!isCheckedInToday() && (
            <div>
              {showCheckin ? (
-               <CheckInForm onSuccess={(nudgeMessage) => { setShowCheckin(false); fetchData(); updateNudge(nudgeMessage); }} />
+               <CheckInForm onSuccess={() => { setShowCheckin(false); fetchData(); }} />
              ) : (
                <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
                  ✨ Check in for today
@@ -122,7 +135,7 @@ export default function Dashboard() {
          )}
 
         {/* Nudge card - appears below check-in form */}
-        {nudge && <NudgeCard nudge={nudge} onDismiss={dismissNudge} />}
+        {nudge && <NudgeCard nudge={nudge} onDismiss={() => setNudge(null)} />}
 {/*         {nudge && ( */}
 {/*           <div className="nudge-section"> */}
 {/*             <NudgeCard nudge={nudge} onDismiss={() => updateNudge(null)} /> */}

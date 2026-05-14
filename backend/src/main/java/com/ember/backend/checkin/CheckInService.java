@@ -66,8 +66,22 @@ public class CheckInService {
         var checkIn = checkInRepository
                 .findByUserIdAndCheckInDate(userId, LocalDate.now())
                 .orElseThrow(() -> new AppException("No check-in found for today", HttpStatus.NOT_FOUND));
+
+        System.out.println("DEBUG nudgeText from DB: " + checkIn.getNudgeText());
         List<Habit> habits = habitRepository.findByUserId(userId);
-        return toDto(checkIn, habits, checkIn.getEnergyScore());
+        CheckInDto dto = toDto(checkIn, habits, checkIn.getEnergyScore());
+        System.out.println("DEBUG nudgeText in DTO: " + dto.getNudgeText()); // add this
+        return dto;
+
+//        return toDto(checkIn, habits, checkIn.getEnergyScore());
+    }
+
+    public void saveNudge(Long userId, String nudgeText) {
+        CheckIn checkIn = checkInRepository
+                .findByUserIdAndCheckInDate(userId, LocalDate.now())
+                .orElseThrow(() -> new AppException("No check-in found for today", HttpStatus.NOT_FOUND));
+        checkIn.setNudgeText(nudgeText);
+        checkInRepository.save(checkIn);
     }
 
     private String generateMessage(int energyScore) {
@@ -79,6 +93,8 @@ public class CheckInService {
             default -> "Rest is part of the process. Your ember is still alive.";
         };
     }
+
+
 
     private CheckInDto toDto(CheckIn checkIn, List<Habit> habits, int energyScore) {
         CheckInDto dto = checkInMapper.toDto(checkIn);
