@@ -252,6 +252,7 @@
 package com.ember.backend.ai;
 
 import com.ember.backend.autopsy.AutopsyDto;
+import com.ember.backend.autopsy.HabitWeeklySummaryDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -295,10 +296,14 @@ public class OpenAIService {
                     "No bullet points. No sentences longer than 12 words.";
 
     private static final String AUTOPSY_SYSTEM_PROMPT =
-            "You are Ember, a data-driven habit coach. Analyze the user's weekly data and write " +
-                    "a clear 3-4 sentence insight paragraph. Focus on patterns in their numbers — energy trends, " +
-                    "consistency score, completion rate. Acknowledge one specific win, identify one pattern, " +
-                    "suggest one concrete adjustment for next week. Be honest and specific, not generic.2-3 emojis overall.";
+            "You are Ember, a data-driven habit coach. You receive a user's weekly habit and energy data. " +
+                    "Write exactly 3 sentences: " +
+                    "1) Acknowledge their single biggest win this week with a specific number or habit name.Pay attention to the streak note given below.Don't use sentences like 'Your streak on reading a book for 5 days is a strong win this week; ' for streak " +
+                    "2) Name the clearest pattern you see — energy, habit, or biometric. " +
+                    "3) Give one concrete, specific suggestion for next week. " +
+                    "Tone: warm but direct, like a coach not a cheerleader. Max 2 emojis. No bullet points." +
+                    "Important: streaks represent consecutive days completed in a row — only reference a streak " +
+                            "if it is 3 or more days. Never confuse total completions with a streak.";
 
     @Value("${openai.api.key:}")
     private String apiKey;
@@ -340,7 +345,7 @@ public class OpenAIService {
     public String generateAutopsyInsight(String userName, AutopsyDto autopsy) {
         if (!isConfigured()) return getFallbackAutopsyInsight();
         String userPrompt = buildAutopsyPrompt(userName, autopsy);
-        return callOpenAI(AUTOPSY_SYSTEM_PROMPT, userPrompt, 300); // 300 tokens — full paragraph
+        return callOpenAI(AUTOPSY_SYSTEM_PROMPT, userPrompt, 350); // 300 tokens — full paragraph
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -468,22 +473,50 @@ public class OpenAIService {
 
     private String buildAutopsyPrompt(String userName, AutopsyDto autopsy) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Analyze ").append(userName).append("'s weekly autopsy data:\n\n");
-        sb.append("Average Energy: ").append(autopsy.getAvgEnergyScore()).append("/5\n");
-        sb.append("Total Check-ins: ").append(autopsy.getTotalCheckIns()).append("/7\n");
-        sb.append("Consistency Score: ").append(autopsy.getConsistencyScore()).append("%\n");
-        sb.append("Habit Completion: ").append(autopsy.getHabitCompletionRate()).append("%\n");
-        
-        if (autopsy.getPatterns() != null && !autopsy.getPatterns().isEmpty()) {
-            sb.append("Detected Patterns: \n");
-            for (String pattern : autopsy.getPatterns()) {
-                sb.append("  - ").append(pattern).append("\n");
+        sb.append("Weekly data for ").append(userName).append(":\n\n");
+
+        // Energy
+        sb.append("Energy: avg ").append(autopsy.getAvgEnergyScore()).append("/5");
+        sb.append(", high energy days: ").append(autopsy.getHighEnergyDays());
+        sb.append(", low energy days: ").append(autopsy.getLowEnergyDays()).append("\n");
+        sb.append("Best day: ").append(autopsy.getBestDay());
+        sb.append(", Worst day: ").append(autopsy.getWorstDay()).append("\n");
+
+        // Consistency
+        sb.append("Check-ins: ").append(autopsy.getTotalCheckIns()).append("/7");
+        sb.append(", Consistency: ").append(autopsy.getConsistencyScore()).append("%\n");
+
+        // Habit performance
+        sb.append("Habits done: ").append(autopsy.getTotalHabitsDone());
+        sb.append(", Habits skipped: ").append(autopsy.getTotalHabitsSkipped()).append("\n");
+
+        // Per-habit breakdown
+        if (autopsy.getHabitSummaries() != null && !autopsy.getHabitSummaries().isEmpty()) {
+            sb.append("Per-habit breakdown:\n");
+            for (HabitWeeklySummaryDto h : autopsy.getHabitSummaries()) {
+                sb.append("  - ").append(h.getHabitName())
+                        .append(": done ").append(h.getWeeklyDone())
+                        .append(", skipped ").append(h.getWeeklySkipped())
+                        .append(", streak ").append(h.getStreakCount()).append("\n");
             }
         }
-        
-        sb.append("\nWrite a short paragraph (3–4 sentences) of personalised insight. ");
-        sb.append("Highlight one pattern you notice, acknowledge their wins, and suggest one small adjustment ");
-        sb.append("for next week. Be encouraging but honest.");
+
+        // Biometric correlations
+        if (autopsy.getSleepCorrelation() != null) {
+            sb.append("Sleep correlation: ").append(autopsy.getSleepCorrelation()).append("\n");
+        }
+        if (autopsy.getHrvCorrelation() != null) {
+            sb.append("HRV correlation: ").append(autopsy.getHrvCorrelation()).append("\n");
+        }
+
+        // Detected patterns
+        if (autopsy.getPatterns() != null && !autopsy.getPatterns().isEmpty()) {
+            sb.append("Detected patterns:\n");
+            for (String pattern : autopsy.getPatterns()) {
+                // Strip emojis — AI doesn't need them, saves tokens
+                sb.append("  - ").append(pattern.replaceAll("[^\\x00-\\x7F]", "").trim()).append("\n");
+            }
+        }
 
         return sb.toString();
     }

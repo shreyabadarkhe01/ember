@@ -44,8 +44,9 @@ public class BiometricDataDto {
 
     // Source of this data — for tracking/debugging
     // Values: "samsung_health", "manual", "health_connect"
-    @NotNull
-    private String source;
+//    @NotNull
+//    private String source;
+    private String source = "MANUAL";
 
     // Optional note from user
     private String note;

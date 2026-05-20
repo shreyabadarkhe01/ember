@@ -75,6 +75,12 @@ export const nudgeApi = {
     api.get(`/api/users/${userId}/ai/autopsy-insight`),
 };
 
+export const biometricApi = {
+  preview: (userId, data) =>
+    api.post(`/api/users/${userId}/biometric-checkin/preview`, data),
 
+  submit: (userId, data) =>
+    api.post(`/api/users/${userId}/biometric-checkin`, data),
+};
 
 export default api;

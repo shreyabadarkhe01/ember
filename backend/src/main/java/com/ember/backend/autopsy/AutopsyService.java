@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.ember.backend.habitlog.HabitLog;
 import com.ember.backend.habitlog.HabitLogRepository;
+import java.util.stream.Collectors;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -147,8 +148,13 @@ public class AutopsyService {
 
         // ── Pattern detection ────────────────────────────────────────
         log.info("Detecting patterns...");
-        List<String> patterns = detectPatterns(checkIns, avgEnergy);
-        log.info("Patterns detected: {}", patterns.size());
+        List<String> energyPatterns = detectPatterns(checkIns, avgEnergy);
+        List<String> habitPatterns = detectHabitPatterns(userId, weekStart, weekEnd, checkIns);
+
+        List<String> allPatterns = new ArrayList<>();
+        allPatterns.addAll(habitPatterns);
+        allPatterns.add("__DIVIDER__"); // frontend uses this to split sections
+        allPatterns.addAll(energyPatterns);
         log.info("Patterns done");
 
         // ── Biometric correlations ───────────────────────────────────
@@ -182,7 +188,7 @@ public class AutopsyService {
                 .habitSummaries(habitSummaries)
                 .activeHabitCount(activeHabitCount)
                 .energyByDay(energyByDay)
-                .patterns(patterns)
+                .patterns(allPatterns)
                 .sleepCorrelation(sleepCorrelation)
                 .hrvCorrelation(hrvCorrelation)
                 .weekSummary(weekSummary)
@@ -350,6 +356,159 @@ public class AutopsyService {
         return patterns;
     }
 
+    private List<String> detectHabitPatterns(Long userId, LocalDate from, LocalDate to, List<CheckIn> checkIns) {
+        List<String> patterns = new ArrayList<>();
+
+        List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
+
+        if (logs.isEmpty()) {
+            patterns.add("📊 No habit activity logged this week yet");
+            return patterns;
+        }
+
+        // ── Group by habit ────────────────────────────────────────────────
+        Map<Long, List<HabitLog>> byHabit = logs.stream()
+                .collect(Collectors.groupingBy(HabitLog::getHabitId));
+
+        String bestHabit = null;
+        int bestDone = 0;
+        String worstHabit = null;
+        int worstSkipped = 0;
+
+        for (Map.Entry<Long, List<HabitLog>> entry : byHabit.entrySet()) {
+            List<HabitLog> habitLogs = entry.getValue();
+            String name = habitLogs.get(0).getHabitName() != null
+                    ? habitLogs.get(0).getHabitName() : "Unknown habit";
+
+            long done = habitLogs.stream()
+                    .filter(l -> l.getStatus() == HabitStatus.DONE).count();
+            long skipped = habitLogs.stream()
+                    .filter(l -> l.getStatus() == HabitStatus.SKIPPED).count();
+
+            // Best performing
+            if (done > bestDone) {
+                bestDone = (int) done;
+                bestHabit = name;
+            }
+
+            // Worst performing
+            if (skipped > worstSkipped) {
+                worstSkipped = (int) skipped;
+                worstHabit = name;
+            }
+
+            if (skipped >= 3) {
+                patterns.add("📉 " + name + " skipped " + skipped + "x this week — streak at risk, consider a lighter version");
+            } else if (skipped == 2) {
+                patterns.add("⚠️ " + name + " skipped twice this week — streak at risk");
+            }
+        }
+
+        // Best habit first — positive reinforcement
+        if (bestHabit != null && bestDone >= 3) {
+            patterns.add(0, "🎯 " + bestHabit + " is your strongest habit — completed " + bestDone + "x this week");
+        }
+
+        // Worst habit after
+        if (worstHabit != null && worstSkipped >= 3) {
+            patterns.add("🔴 " + worstHabit + " needs the most attention this week");
+        }
+
+        // ── Energy-habit correlation ──────────────────────────────────────
+        // Build a map of date → energyScore from check-ins
+        Map<LocalDate, Integer> energyByDate = checkIns.stream()
+                .filter(c -> c.getEnergyScore() != null)
+                .collect(Collectors.toMap(
+                        CheckIn::getCheckInDate,
+                        CheckIn::getEnergyScore,
+                        (a, b) -> a // keep first if duplicate date
+                ));
+
+        // For each habit, check if it's skipped on low energy days specifically
+        for (Map.Entry<Long, List<HabitLog>> entry : byHabit.entrySet()) {
+            List<HabitLog> habitLogs = entry.getValue();
+            String name = habitLogs.get(0).getHabitName() != null
+                    ? habitLogs.get(0).getHabitName() : "Unknown habit";
+
+            long skippedOnLowEnergy = habitLogs.stream()
+                    .filter(l -> l.getStatus() == HabitStatus.SKIPPED)
+                    .filter(l -> {
+                        Integer energy = energyByDate.get(l.getDate());
+                        return energy != null && energy <= 2;
+                    })
+                    .count();
+
+            long doneOnLowEnergy = habitLogs.stream()
+                    .filter(l -> l.getStatus() == HabitStatus.DONE)
+                    .filter(l -> {
+                        Integer energy = energyByDate.get(l.getDate());
+                        return energy != null && energy <= 2;
+                    })
+                    .count();
+
+            if (skippedOnLowEnergy >= 2 && doneOnLowEnergy == 0) {
+                patterns.add("🔗 " + name + " is consistently skipped on low energy days — consider a lighter minimal version");
+            }
+        }
+
+        // ── Biometric correlations ────────────────────────────────────────
+        // Sleep → completion rate
+        List<HabitLog> doneAfterGoodSleep = logs.stream()
+                .filter(l -> l.getStatus() == HabitStatus.DONE)
+                .filter(l -> {
+                    Integer energy = energyByDate.get(l.getDate());
+                    // proxy: if energy >= 4 on that day (biometric sleep data if available)
+                    CheckIn ci = checkIns.stream()
+                            .filter(c -> c.getCheckInDate().equals(l.getDate()))
+                            .findFirst().orElse(null);
+                    return ci != null && ci.getSleepHours() != null && ci.getSleepHours() >= 7.0;
+                })
+                .collect(Collectors.toList());
+
+        List<HabitLog> doneAfterPoorSleep = logs.stream()
+                .filter(l -> l.getStatus() == HabitStatus.DONE)
+                .filter(l -> {
+                    CheckIn ci = checkIns.stream()
+                            .filter(c -> c.getCheckInDate().equals(l.getDate()))
+                            .findFirst().orElse(null);
+                    return ci != null && ci.getSleepHours() != null && ci.getSleepHours() < 6.0;
+                })
+                .collect(Collectors.toList());
+
+        if (!doneAfterGoodSleep.isEmpty() && doneAfterGoodSleep.size() > doneAfterPoorSleep.size() + 1) {
+            patterns.add("💤 You complete significantly more habits after 7+ hours of sleep — sleep is your biggest lever");
+        }
+
+        // HRV correlation
+        long highHrvDone = logs.stream()
+                .filter(l -> l.getStatus() == HabitStatus.DONE)
+                .filter(l -> {
+                    CheckIn ci = checkIns.stream()
+                            .filter(c -> c.getCheckInDate().equals(l.getDate()))
+                            .findFirst().orElse(null);
+                    return ci != null && ci.getHrvMs() != null && ci.getHrvMs() >= 50;
+                })
+                .count();
+
+        long lowHrvSkipped = logs.stream()
+                .filter(l -> l.getStatus() == HabitStatus.SKIPPED)
+                .filter(l -> {
+                    CheckIn ci = checkIns.stream()
+                            .filter(c -> c.getCheckInDate().equals(l.getDate()))
+                            .findFirst().orElse(null);
+                    return ci != null && ci.getHrvMs() != null && ci.getHrvMs() < 40;
+                })
+                .count();
+
+        if (highHrvDone >= 2) {
+            patterns.add("❤️ High HRV days correlate with better habit completion — recovery is working");
+        }
+        if (lowHrvSkipped >= 2) {
+            patterns.add("📡 Low HRV days see more skipped habits — your body signals are reliable stress indicators");
+        }
+
+        return patterns;
+    }
     /**
      * Analyse correlation between sleep and energy score.
      */

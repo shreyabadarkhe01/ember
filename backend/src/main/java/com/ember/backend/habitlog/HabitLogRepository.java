@@ -1,5 +1,6 @@
 package com.ember.backend.habitlog;
 
+import com.ember.backend.habit.HabitStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -22,4 +23,6 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
     // Count completions for a user in range — quick query for autopsy
     @Query("SELECT COUNT(l) FROM HabitLog l WHERE l.userId = :userId AND l.status = 'DONE' AND l.date BETWEEN :from AND :to")
     int countCompletionsByUserIdAndDateBetween(Long userId, LocalDate from, LocalDate to);
+
+    boolean existsByHabitIdAndDateAndStatus(Long habitId, LocalDate date, HabitStatus status);
 }

@@ -155,18 +155,45 @@ export default function AutopsyPage() {
                 <AutopsyInsightCard userId={user.id} />
 
               {/* Patterns */}
-              {autopsy.patterns?.length > 0 && (
-                <div className="autopsy-card">
-                  <h3>Patterns Detected</h3>
-                  <div className="patterns-list">
-                    {autopsy.patterns.map((pattern, i) => (
-                      <div key={i} className="pattern-item">
-                        {pattern}
-                      </div>
-                    ))}
+              {autopsy.patterns?.length > 0 && (() => {
+                const dividerIndex = autopsy.patterns.indexOf('__DIVIDER__');
+                const habitPatterns = dividerIndex > -1
+                  ? autopsy.patterns.slice(0, dividerIndex)
+                  : autopsy.patterns;
+                const energyPatterns = dividerIndex > -1
+                  ? autopsy.patterns.slice(dividerIndex + 1)
+                  : [];
+
+                return (
+                  <div className="autopsy-card">
+                    <h3>Patterns Detected</h3>
+
+                    {habitPatterns.length > 0 && (
+                      <>
+                        <div className="patterns-section-label">Habit Patterns</div>
+                        <div className="patterns-list">
+                          {habitPatterns.map((pattern, i) => (
+                            <div key={i} className="pattern-item">{pattern}</div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {energyPatterns.length > 0 && (
+                      <>
+                        <div className="patterns-section-label" style={{ marginTop: '1rem' }}>
+                          Energy Patterns
+                        </div>
+                        <div className="patterns-list">
+                          {energyPatterns.map((pattern, i) => (
+                            <div key={i} className="pattern-item">{pattern}</div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Correlations */}
               <div className="autopsy-card">
@@ -334,6 +361,31 @@ export default function AutopsyPage() {
       .habit-summary-week {
         font-size: 11px;
         color: var(--text3);
+      }
+
+      .patterns-section-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text3);
+        margin-bottom: 0.5rem;
+      }
+
+      .patterns-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .pattern-item {
+        font-size: 13px;
+        color: var(--text2);
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        line-height: 1.4;
       }
     `}</style>
     </>

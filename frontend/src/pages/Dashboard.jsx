@@ -6,6 +6,7 @@ import HabitList from '../components/HabitList';
 import HabitForm from '../components/HabitForm';
 import NudgeCard from "../components/Nudgecard";
 import Navbar from '../components/Navbar';
+import BiometricForm from "../components/BiometricForm";
 
 
 export default function Dashboard() {
@@ -121,18 +122,23 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Check-in section */}
-         {!isCheckedInToday() && (
-           <div>
-             {showCheckin ? (
-               <CheckInForm onSuccess={() => { setShowCheckin(false); fetchData(); }} />
-             ) : (
-               <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
-                 ✨ Check in for today
-               </button>
-             )}
-           </div>
-         )}
+        {!isCheckedInToday() && (
+          <div>
+            {showCheckin ? (
+              <CheckInForm onSuccess={() => { setShowCheckin(false); fetchData(); }} />
+            ) : (
+              <>
+                <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
+                  ✨ Check in for today
+                </button>
+                <BiometricForm
+                  userId={user.id}
+                  onSuccess={() => {fetchData();fetchNudge(checkin.energyScore); }}
+                />
+              </>
+            )}
+          </div>
+        )}
 
         {/* Nudge card - appears below check-in form */}
         {nudge && <NudgeCard nudge={nudge} onDismiss={() => setNudge(null)} />}
@@ -172,6 +178,9 @@ export default function Dashboard() {
             <a href="/autopsy">View autopsy →</a>
           </div>
         )}
+
+
+
 
       </main>
     </div>

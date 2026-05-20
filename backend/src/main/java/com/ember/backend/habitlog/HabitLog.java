@@ -21,7 +21,7 @@ public class HabitLog {
     @Column(nullable = false)
     private Long habitId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String habitName; // snapshot — so autopsy works even if habit is renamed/archived
 
     @Column(nullable = false)

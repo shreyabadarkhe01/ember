@@ -55,14 +55,24 @@ public class HabitService {
         Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
 
+        // Consecutive streak logic
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        boolean completedYesterday = habitLogRepository
+                .existsByHabitIdAndDateAndStatus(habitId, yesterday, HabitStatus.DONE);
+
+        if (completedYesterday || habit.getStreakCount() == 0) {
+            habit.setStreakCount(habit.getStreakCount() + 1);
+        } else {
+            habit.setStreakCount(1); // streak broken, restart
+        }
+
         habit.setStatus(HabitStatus.DONE);
-        habit.setStreakCount(habit.getStreakCount() + 1);
         Habit saved = habitRepository.save(habit);
 
         // Log to HabitLog — only if not already logged today
         habitLogRepository.findByHabitIdAndDate(habitId, LocalDate.now())
                 .ifPresentOrElse(
-                        existing -> {}, // already logged, skip
+                        existing -> {},
                         () -> habitLogRepository.save(HabitLog.builder()
                                 .userId(userId)
                                 .habitId(habitId)
@@ -81,6 +91,7 @@ public class HabitService {
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
 
         habit.setStatus(HabitStatus.SKIPPED);
+        habit.setStreakCount(0); // skip always breaks streak
         Habit saved = habitRepository.save(habit);
 
         // Log skip
