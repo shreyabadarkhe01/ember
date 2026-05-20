@@ -63,7 +63,7 @@ public class HabitController {
     public ResponseEntity<HabitDto> resetHabit(
             @PathVariable Long userId,
             @PathVariable Long habitId) {
-        return ResponseEntity.ok(habitService.resetHabit(habitId));
+        return ResponseEntity.ok(habitService.resetHabit(userId,habitId));
     }
 
     @PatchMapping("/{userId}/habits/{habitId}/archive")

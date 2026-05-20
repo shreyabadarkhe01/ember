@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Energy score for a single day — used in the weekly chart.
@@ -23,4 +24,5 @@ public class DailyEnergyDto {
     private Double hrvMs;
     private Integer restingHeartRate;
     private Integer steps;
+    private List<String> habitsDone;
 }

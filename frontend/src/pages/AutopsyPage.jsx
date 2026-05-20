@@ -101,7 +101,48 @@ export default function AutopsyPage() {
                 <h3>Energy This Week</h3>
                 <div className="energy-chart">
                   {autopsy.energyByDay?.map((day) => (
-                    <div key={day.date} className="chart-bar-wrap">
+                    <div key={day.date} className="chart-bar-wrap" style={{ position: 'relative' }}>
+
+                      {/* Tooltip */}
+                      {day.checkedIn && (
+                        <div className="day-tooltip">
+                          <div className="tooltip-date">
+                            {day.dayName} · {formatDate(day.date)}
+                          </div>
+                          <div className="tooltip-row">
+                            ⚡ Energy: <strong>{day.energyScore}/5</strong>
+                          </div>
+                          {day.sleepHours != null && (
+                            <div className="tooltip-row">
+                              💤 Sleep: <strong>{day.sleepHours}h</strong>
+                            </div>
+                          )}
+                          {day.restingHeartRate != null && (
+                            <div className="tooltip-row">
+                              💓 Avg HR: <strong>{day.restingHeartRate} bpm</strong>
+                            </div>
+                          )}
+                          {day.steps != null && (
+                            <div className="tooltip-row">
+                              👟 Steps: <strong>{day.steps.toLocaleString()}</strong>
+                            </div>
+                          )}
+                          {day.habitsDone?.length > 0 && (
+                            <div className="tooltip-habits">
+                              <div className="tooltip-habits-label">✅ Done:</div>
+                              {day.habitsDone.map((h, i) => (
+                                <div key={i} className="tooltip-habit-item">{h}</div>
+                              ))}
+                            </div>
+                          )}
+                          {day.habitsDone?.length === 0 && (
+                            <div className="tooltip-row" style={{ color: 'var(--text3)' }}>
+                              No habits logged
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="chart-bar-container">
                         {day.checkedIn ? (
                           <div
@@ -111,9 +152,7 @@ export default function AutopsyPage() {
                               background: ENERGY_COLORS[day.energyScore],
                             }}
                           >
-                            <span className="bar-emoji">
-                              {ENERGY_EMOJIS[day.energyScore]}
-                            </span>
+                            <span className="bar-emoji">{ENERGY_EMOJIS[day.energyScore]}</span>
                           </div>
                         ) : (
                           <div className="chart-bar missed">
@@ -121,9 +160,7 @@ export default function AutopsyPage() {
                           </div>
                         )}
                       </div>
-                      <div className="chart-day">
-                        {day.dayName?.slice(0, 3)}
-                      </div>
+                      <div className="chart-day">{day.dayName?.slice(0, 3)}</div>
                       <div className="chart-score" style={{
                         color: day.checkedIn ? ENERGY_COLORS[day.energyScore] : 'var(--text3)'
                       }}>
@@ -386,6 +423,70 @@ export default function AutopsyPage() {
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 8px;
         line-height: 1.4;
+      }
+
+      .chart-bar-wrap {
+        position: relative;
+      }
+
+      .chart-bar-wrap:hover .day-tooltip {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateX(-50%) translateY(-4px);
+      }
+
+      .day-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(0px);
+        background: var(--card, #1e1e2e);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 0.6rem 0.75rem;
+        min-width: 160px;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      }
+
+      .tooltip-date {
+        font-size: 11px;
+        color: var(--text3);
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .tooltip-row {
+        font-size: 13px;
+        color: var(--text2);
+        margin-bottom: 2px;
+      }
+
+      .tooltip-row strong {
+        color: var(--text);
+      }
+
+      .tooltip-habits {
+        margin-top: 0.4rem;
+        border-top: 1px solid rgba(255,255,255,0.07);
+        padding-top: 0.4rem;
+      }
+
+      .tooltip-habits-label {
+        font-size: 11px;
+        color: var(--text3);
+        margin-bottom: 3px;
+      }
+
+      .tooltip-habit-item {
+        font-size: 12px;
+        color: #22c55e;
+        padding: 1px 0;
       }
     `}</style>
     </>

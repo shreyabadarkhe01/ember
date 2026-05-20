@@ -61,7 +61,8 @@ public class AutopsyService {
 
         // ── Build daily breakdown ────────────────────────────────────
         log.info("Daily breakdown built");
-        List<DailyEnergyDto> energyByDay = buildDailyBreakdown(weekStart, weekEnd, checkIns);
+        List<HabitLog> weekLogs = habitLogRepository.findByUserIdAndDateBetween(userId, weekStart, weekEnd);
+        List<DailyEnergyDto> energyByDay = buildDailyBreakdown(weekStart, weekEnd, checkIns, weekLogs);
         log.info("Daily breakdown done");
 
         log.info("Building AutopsyDto...");
@@ -103,20 +104,17 @@ public class AutopsyService {
         // Count habits by status across all check-ins this week
 
         log.info("Habit performance...");
-        LocalDate to   = LocalDate.now();
-        LocalDate from = to.minusDays(6); // last 7 days
 
-        List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
 
         // Per-habit weekly summary
         List<HabitWeeklySummaryDto> habitSummaries = habits.stream()
                 .filter(h -> h.getStatus() != HabitStatus.ARCHIVED)
                 .map(h -> {
-                    int done = (int) logs.stream()
+                    int done = (int) weekLogs.stream()
                             .filter(l -> l.getHabitId().equals(h.getId())
                                     && l.getStatus() == HabitStatus.DONE)
                             .count();
-                    int skipped = (int) logs.stream()
+                    int skipped = (int) weekLogs.stream()
                             .filter(l -> l.getHabitId().equals(h.getId())
                                     && l.getStatus() == HabitStatus.SKIPPED)
                             .count();
@@ -131,9 +129,9 @@ public class AutopsyService {
                 })
                 .collect(Collectors.toList());
 
-        long totalLogs  = logs.size();
-        long doneLogs   = logs.stream().filter(l -> l.getStatus() == HabitStatus.DONE).count();
-        long skippedLogs = logs.stream().filter(l -> l.getStatus() == HabitStatus.SKIPPED).count();
+        long totalLogs = weekLogs.size();
+        long doneLogs = weekLogs.stream().filter(l -> l.getStatus() == HabitStatus.DONE).count();
+        long skippedLogs = weekLogs.stream().filter(l -> l.getStatus() == HabitStatus.SKIPPED).count();
 
         long attemptedLogs = doneLogs + skippedLogs;
         double habitCompletionRate = attemptedLogs > 0
@@ -204,7 +202,7 @@ public class AutopsyService {
             log.warn("Claude insight generation failed, continuing without it");
         }
 
-        
+
         return autopsy;
     }
 
@@ -212,26 +210,34 @@ public class AutopsyService {
 
     /**
      * Build a DailyEnergyDto for each day in the week,
-     * including days where user didn't check in (checkedIn = false).
+     * including day where user didn't check in (checkedIn = false).
      */
 
     private List<DailyEnergyDto> buildDailyBreakdown(
-            LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns) {
+            LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns,
+            List<HabitLog> weekLogs) {
 
         log.info("Building map...");
         Map<LocalDate, CheckIn> checkInMap = checkIns.stream()
                 .collect(Collectors.toMap(
                         CheckIn::getCheckInDate,
                         c -> c,
-                        (existing, replacement) -> replacement // keep latest if duplicate
+                        (existing, replacement) -> replacement // keeps latest if duplicate
                 ));
         log.info("Map built: {}", checkInMap.size());
+
+        // Group habit logs by date — only DONE ones
+        Map<LocalDate, List<String>> habitsDoneByDate = weekLogs.stream()
+                .filter(l -> l.getStatus() == HabitStatus.DONE && l.getHabitName() != null)
+                .collect(Collectors.groupingBy(
+                        HabitLog::getDate,
+                        Collectors.mapping(HabitLog::getHabitName, Collectors.toList())
+                ));
 
         List<DailyEnergyDto> days = new ArrayList<>();
         LocalDate current = weekStart;
 
         while (!current.isAfter(weekEnd)) {
-            log.info("Processing day: {}", current);
             CheckIn checkIn = checkInMap.get(current);
             String dayName = current.getDayOfWeek()
                     .getDisplayName(TextStyle.FULL, Locale.ENGLISH);
@@ -239,19 +245,21 @@ public class AutopsyService {
             DailyEnergyDto.DailyEnergyDtoBuilder builder = DailyEnergyDto.builder()
                     .date(current)
                     .dayName(dayName)
-                    .checkedIn(checkIn != null);
+                    .checkedIn(checkIn != null)
+                    .habitsDone(habitsDoneByDate.getOrDefault(current, List.of()));
 
             if (checkIn != null) {
-                log.info("CheckIn found for {}: energy={}", current, checkIn.getEnergyScore());
                 builder.energyScore(checkIn.getEnergyScore())
-                        .source(checkIn.getSource());
+                        .source(checkIn.getSource())
+                        .sleepHours(checkIn.getSleepHours())
+                        .restingHeartRate(checkIn.getRestingHeartRate())
+                        .steps(checkIn.getSteps());
             }
 
             days.add(builder.build());
             current = current.plusDays(1);
         }
 
-        log.info("Daily breakdown complete: {} days", days.size());
         return days;
     }
 
@@ -359,7 +367,7 @@ public class AutopsyService {
     private List<String> detectHabitPatterns(Long userId, LocalDate from, LocalDate to, List<CheckIn> checkIns) {
         List<String> patterns = new ArrayList<>();
 
-        List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
+       final List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
 
         if (logs.isEmpty()) {
             patterns.add("📊 No habit activity logged this week yet");

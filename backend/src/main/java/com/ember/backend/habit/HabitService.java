@@ -120,15 +120,23 @@ public class HabitService {
         return habitMapper.toDto(habitRepository.save(habit));
     }
 
-    public HabitDto resetHabit(Long habitId) {
-        var habit = habitRepository.findById(habitId)
+    @Transactional
+    public HabitDto resetHabit(Long userId, Long habitId) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
                 .orElseThrow(() -> new AppException("Habit not found", HttpStatus.NOT_FOUND));
-        // Decrement streak only if it was DONE
-        if (habit.getStatus() == HabitStatus.DONE && habit.getStreakCount() > 0) {
-            habit.setStreakCount(habit.getStreakCount() - 1);
+
+        // Reverse streak only if it was DONE
+        if (habit.getStatus() == HabitStatus.DONE) {
+            habit.setStreakCount(Math.max(0, habit.getStreakCount() - 1));
         }
+
         habit.setStatus(HabitStatus.ACTIVE);
-        return habitMapper.toDto(habitRepository.save(habit));
+        habitRepository.save(habit);
+
+        // Delete today's HabitLog entry so tooltip reflects the undo
+        habitLogRepository.deleteByHabitIdAndDate(habitId, LocalDate.now());
+
+        return habitMapper.toDto(habit);
     }
 
     @Transactional

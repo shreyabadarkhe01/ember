@@ -25,4 +25,6 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
     int countCompletionsByUserIdAndDateBetween(Long userId, LocalDate from, LocalDate to);
 
     boolean existsByHabitIdAndDateAndStatus(Long habitId, LocalDate date, HabitStatus status);
+
+    void deleteByHabitIdAndDate(Long habitId, LocalDate date);
 }
