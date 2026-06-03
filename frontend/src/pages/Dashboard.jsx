@@ -5,7 +5,7 @@ import CheckInForm from '../components/CheckInForm';
 import HabitList from '../components/HabitList';
 import HabitForm from '../components/HabitForm';
 import NudgeCard from "../components/Nudgecard";
-import Navbar from '../components/Navbar';
+import Navbar from '../components/NavBar';
 import BiometricForm from "../components/BiometricForm";
 import { nudgeApi } from '../services/api';
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { autopsyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AutopsyInsightCard from "../components/Autopsyinsightcard";
-import Navbar from '../components/Navbar';
+import Navbar from '../components/NavBar';
 
 const ENERGY_COLORS = {
   1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#22c55e'
