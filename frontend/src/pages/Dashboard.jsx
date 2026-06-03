@@ -7,6 +7,7 @@ import HabitForm from '../components/HabitForm';
 import NudgeCard from "../components/Nudgecard";
 import Navbar from '../components/Navbar';
 import BiometricForm from "../components/BiometricForm";
+import { nudgeApi } from '../services/api';
 
 
 export default function Dashboard() {
@@ -29,20 +30,18 @@ export default function Dashboard() {
     sessionStorage.removeItem('ember_nudge'); // permanent dismiss
     setNudge(null);
   };
-
-  // useEffect — only hides/shows state, never touches sessionStorage
-  useEffect(() => {
-    if (!habits.length) return;
-
-    const activeHabits = habits.filter(h => h.status === 'ACTIVE');
-    const stored = sessionStorage.getItem('ember_nudge');
-
-    if (activeHabits.length === 0) {
-      setNudge(null); // hide nudge in UI — but key stays in sessionStorage
-    } else if (stored && !nudge) {
-      setNudge(stored); // restore from storage when active habit exists again
+  const fetchNudgeAfterBiometric = async (energyScore) => {
+    if (!energyScore) return;
+    try {
+      const res = await nudgeApi.getNudge(user.id, { energyScore });
+      if (res?.data?.nudge) {
+        updateNudge(res.data.nudge);
+      }
+    } catch (err) {
+      console.error('Nudge fetch failed:', err);
     }
-  }, [habits]); // eslint-disable-line react-hooks/exhaustive-deps
+  };
+  
 
   const fetchData = useCallback(async () => {
     try {
@@ -57,10 +56,29 @@ export default function Dashboard() {
       setHabits(fetchedHabits);
       setLatestCheckin(checkin);
 
-      // Show nudge only if: nudge exists + at least one habit is not DONE
-      const hasActiveHabits = fetchedHabits.some(h => h.status !== 'DONE');
+      // Check if today's check-in exists using local variable
+      const c = checkin?.checkInDate || checkin?.date;
+      const isToday = c && (() => {
+        if (Array.isArray(c)) {
+          const today = new Date();
+          return c[0] === today.getFullYear() &&
+                 c[1] === today.getMonth() + 1 &&
+                 c[2] === today.getDate();
+        }
+        return new Date(c).toDateString() === new Date().toDateString();
+      })();
+
+      if (!isToday) {
+        // Not checked in today — clear any stale nudge
+        sessionStorage.removeItem('ember_nudge');
+        setNudge(null);
+        return;
+      }
+
+      // Checked in today — show nudge if active habits remain
+      const hasActiveHabits = fetchedHabits.some(h => h.status !== 'DONE' && h.status !== 'ARCHIVED');
       if (checkin?.nudgeText && hasActiveHabits) {
-        setNudge(checkin.nudgeText);
+        updateNudge(checkin.nudgeText);
       } else {
         setNudge(null);
       }
@@ -128,13 +146,20 @@ export default function Dashboard() {
               <CheckInForm onSuccess={() => { setShowCheckin(false); fetchData(); }} />
             ) : (
               <>
-                <button className="btn-checkin" onClick={() => setShowCheckin(true)}>
-                  ✨ Check in for today
-                </button>
                 <BiometricForm
                   userId={user.id}
-                  onSuccess={() => {fetchData();fetchNudge(checkin.energyScore); }}
+                  onSuccess={(checkinData) => {
+                    fetchData();
+                    if (checkinData?.nudgeText) {
+                      updateNudge(checkinData.nudgeText);
+                    } else {
+                      fetchNudgeAfterBiometric(checkinData?.energyScore);
+                    }
+                  }}
                 />
+                <button className="btn-checkin" style={{ marginTop: "0.75rem" }} onClick={() => setShowCheckin(true)}>
+                  ✨ Or Check-In manually
+                </button>
               </>
             )}
           </div>

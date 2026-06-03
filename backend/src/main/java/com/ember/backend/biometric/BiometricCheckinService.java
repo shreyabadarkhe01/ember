@@ -1,18 +1,23 @@
 package com.ember.backend.biometric;
 
+import com.ember.backend.ai.HabitContext;
 import com.ember.backend.checkin.CheckIn;
 import com.ember.backend.checkin.CheckInRepository;
 import com.ember.backend.energy.EnergyBreakdown;
 import com.ember.backend.energy.EnergyCalculator;
 import com.ember.backend.common.AppException;
+import com.ember.backend.habit.HabitRepository;
 import com.ember.backend.user.User;
 import com.ember.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import com.ember.backend.ai.OpenAIService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +26,8 @@ public class BiometricCheckinService {
     private final EnergyCalculator energyCalculator;
     private final CheckInRepository checkInRepository;
     private final UserRepository userRepository;
+    private final OpenAIService openAIService;
+    private final HabitRepository habitRepository;
 
     /**
      * Process biometric data → calculate energy score → create check-in.
@@ -76,6 +83,35 @@ public class BiometricCheckinService {
 
         CheckIn saved = checkInRepository.save(checkIn);
 
+        // Generate and persist nudge
+        try {
+            List<HabitContext> habitContexts = habitRepository.findByUserId(userId)
+                    .stream()
+                    .filter(h -> !h.getStatus().name().equals("ARCHIVED"))
+                    .map(h -> new HabitContext(
+                            h.getName(),
+                            h.getMinimalVersion(),
+                            h.getLiteVersion(),
+                            h.getFullVersion(),
+                            h.getStreakCount()
+                    ))
+                    .collect(Collectors.toList());
+
+            String nudgeText = openAIService.generateNudge(
+                    energyScore,
+                    dto.getSleepHours(),
+                    dto.getHrvMs() != null ? dto.getHrvMs().intValue() : null,
+                    habitContexts
+            );
+
+            if (nudgeText != null) {
+                saved.setNudgeText(nudgeText);
+                checkInRepository.save(saved);
+            }
+        } catch (Exception e) {
+            // Nudge failure never blocks check-in
+        }
+
         // 6. Return response with breakdown
         return BiometricCheckinResponseDto.builder()
                 .checkInId(saved.getId())
@@ -84,6 +120,7 @@ public class BiometricCheckinService {
                 .breakdown(breakdown)
                 .date(today)
                 .source(dto.getSource())
+                .nudgeText(saved.getNudgeText())
                 .build();
     }
 

@@ -67,10 +67,10 @@ public class CheckInService {
                 .findByUserIdAndCheckInDate(userId, LocalDate.now())
                 .orElseThrow(() -> new AppException("No check-in found for today", HttpStatus.NOT_FOUND));
 
-        System.out.println("DEBUG nudgeText from DB: " + checkIn.getNudgeText());
+
         List<Habit> habits = habitRepository.findByUserId(userId);
         CheckInDto dto = toDto(checkIn, habits, checkIn.getEnergyScore());
-        System.out.println("DEBUG nudgeText in DTO: " + dto.getNudgeText()); // add this
+
         return dto;
 
 //        return toDto(checkIn, habits, checkIn.getEnergyScore());

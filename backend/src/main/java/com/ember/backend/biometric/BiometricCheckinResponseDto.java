@@ -14,6 +14,7 @@ public class BiometricCheckinResponseDto {
     private Long userId;
     private Integer energyScore;       // 1-5
     private EnergyBreakdown breakdown; // why this score
+    private String nudgeText;
     private LocalDate date;
     private String source;             // "samsung_health", "manual", "health_connect"
 }
