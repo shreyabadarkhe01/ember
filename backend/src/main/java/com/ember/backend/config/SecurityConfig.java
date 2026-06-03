@@ -118,7 +118,10 @@ public class SecurityConfig {
                 "http://localhost:5173",   // Vite dev server
                 "http://localhost:3000",   // fallback
                 "http://127.0.0.1:5173",
-                "http://127.0.0.1:3000"
+                "http://127.0.0.1:3000",
+                "https://ember-kkz66hvar-shreyabadarkhe01s-projects.vercel.app",
+                "https://ember-neon-theta.vercel.app",
+                "https://ember-3plmi1dhb-shreyabadarkhe01s-projects.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         config.setAllowedHeaders(List.of("*"));
