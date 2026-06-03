@@ -10,6 +10,7 @@ import com.ember.backend.habit.HabitService;
 import com.ember.backend.user.User;
 import com.ember.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  * GET /api/users/{id}/ai/autopsy-insight
  *   → Returns AI analysis of the user's 7-day autopsy summary
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/users/{id}/ai")
 @RequiredArgsConstructor
@@ -53,6 +55,7 @@ public class NudgeController {
             @PathVariable Long id,
             @RequestBody NudgeRequest request
     ) {
+
         // Fetch user's active habits and map to lightweight context objects
         List<HabitContext> habits = habitService.getUserHabits(id)
                 .stream()

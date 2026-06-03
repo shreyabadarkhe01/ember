@@ -117,6 +117,9 @@ public class HabitService {
         if (dto.getFullVersion() != null) habit.setFullVersion(dto.getFullVersion());
         if (dto.getLiteVersion() != null) habit.setLiteVersion(dto.getLiteVersion());
         if (dto.getMinimalVersion() != null) habit.setMinimalVersion(dto.getMinimalVersion());
+        if (dto.getStatus() != null) {
+            habit.setStatus(dto.getStatus());
+        }
         return habitMapper.toDto(habitRepository.save(habit));
     }
 

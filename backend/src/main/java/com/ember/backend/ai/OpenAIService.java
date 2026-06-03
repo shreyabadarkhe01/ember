@@ -332,6 +332,7 @@ public class OpenAIService {
     public String generateNudge(int energyScore, Double sleepHours, Integer hrvMs, List<HabitContext> habits) {
         if (!isConfigured()) return getFallbackNudge(energyScore, habits);
         String userPrompt = buildNudgePrompt(energyScore, sleepHours, hrvMs, habits);
+
         return callOpenAI(NUDGE_SYSTEM_PROMPT, userPrompt, 120); // 120 tokens — short nudge
     }
 
