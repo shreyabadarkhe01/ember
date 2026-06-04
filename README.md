@@ -1,353 +1,147 @@
 # 🔥 Ember — Adaptive Habit Tracker
 
-> *Your habits should adapt to your energy, not the other way around.*
+> *"We don't reset your streak. We keep your ember alive."*
 
-Ember is a full-stack habit tracking app that scales your daily habit targets based on your energy level. Instead of a rigid "did you or didn't you" system, Ember gives you three versions of every habit — minimal, lite, and full — and picks the right one for how you're feeling today. Eventually, energy scores will be detected **automatically** from Samsung Health biometric data via Health Connect.
+Ember is a full-stack habit tracking app that adapts your daily goals to your energy level. Instead of rigid all-or-nothing habits, Ember scales each habit across three versions — Minimal, Lite, and Full — based on how you're feeling that day.
 
----
-
-## 📸 Screenshots
-
-> Coming soon — UI screenshots will be added after deployment.
+**Live Demo:** [ember-neon-theta.vercel.app](https://ember-neon-theta.vercel.app)
 
 ---
 
-## ✨ Features
+## How It Works
 
-### Current
-- 🔐 **JWT Authentication** — secure register and login
-- ⚡ **Adaptive Habits** — 3 versions per habit (Minimal / Lite / Full)
-- 📊 **Daily Check-in** — manual energy score (1–5) that scales your habits for the day
-- ✅ **Habit Tracking** — mark habits Done or Skipped, with streak counting
-- ↩️ **Undo actions** — reset a habit back to Active
-- 📋 **Swagger UI** — full API documentation with JWT auth support
-- 🌐 **React Frontend** — responsive web app with dark ember-themed design
-
-### Coming Soon
-- 📱 **Samsung Health Integration** — auto energy score from sleep, HRV, resting heart rate via Health Connect
-- 📊 **Weekly Autopsy** — 7-day pattern analysis (best/worst days, consistency score, habit completion rate)
-- 🤖 **Claude AI Insights** — personalised nudges after check-in, weekly AI-generated pattern analysis
-- 🚀 **Deployment** — Railway (backend) + Vercel (frontend)
-- 📲 **Flutter Mobile App** — Android app with Health Connect integration
+1. **Check in daily** — rate your energy (1–5) manually or via biometric data (sleep, heart rate, steps, HRV)
+2. **Ember scales your habits** — low energy day? Minimal version. High energy? Full version.
+3. **AI nudge** — GPT-4.1 Nano generates a personalised motivational nudge after each check-in
+4. **Weekly Autopsy** — pattern detection + AI insight on your energy and habit trends
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
+
+| Layer | Technology                                      |
+|-------|-------------------------------------------------|
+| Backend | Spring Boot 3, Java 21, JWT Auth, JPA/Hibernate |
+| Frontend | React 18, Vite, Axios                           |
+| Mobile | Flutter 3, Health Connect API (Android)         |
+| Database | PostgreSQL (Supabase)                           |
+| AI | OpenAI GPT-4.1 Nano                             |
+| Deploy | Render (backend), Vercel (frontend), Docker     |
+
+---
+
+## Features
+
+- **Adaptive habit scaling** — 3 versions per habit (Minimal/Lite/Full) driven by energy score
+- **Dual check-in modes** — manual energy selector or biometric form (sleep, HR, HRV, steps, calories)
+- **AI nudges** — personalised post check-in motivation via GPT-4.1 Nano
+- **Streak tracking** — consecutive day streaks, resets on skip, minimal version counts
+- **Weekly Autopsy** — energy chart, habit performance, pattern detection, AI insight
+- **Health Connect integration** — auto-detect energy from wearables (Galaxy Watch, Pixel Watch, Fitbit etc.)
+- **Archive/unarchive habits** — hide habits without losing streak history
+- **Flutter mobile app** — full habit flow with bottom nav, autopsy chart, nudge card
+
+---
+
+## Project Structure
+ember/
+├── backend/          # Spring Boot API
+│   ├── auth/         # JWT authentication
+│   ├── habit/        # Habit CRUD + adaptive scaling
+│   ├── checkin/      # Daily check-ins
+│   ├── biometric/    # Health Connect biometric processing
+│   ├── ai/           # OpenAI nudge + autopsy insight
+│   ├── autopsy/      # Weekly report generation
+│   └── habitlog/     # Daily habit completion tracking
+├── frontend/         # React/Vite web app
+└── ember_mobile/     # Flutter mobile app
+---
+
+## Local Setup
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| Java 21 | Language |
-| Spring Boot 3.2.5 | Framework |
-| Spring Security + JWT | Authentication |
-| PostgreSQL | Database |
-| Spring Data JPA + Hibernate | ORM |
-| MapStruct | DTO mapping |
-| Lombok | Boilerplate reduction |
-| springdoc-openapi 2.3.0 | Swagger UI |
-| Maven | Build tool |
-
-### Frontend
-| Technology | Purpose |
-|------------|---------|
-| React 18 | UI framework |
-| Vite | Build tool |
-| React Router v6 | Routing |
-| Axios | HTTP client |
-| CSS Variables | Theming |
-
-### Planned
-| Technology | Purpose |
-|------------|---------|
-| Flutter | Android mobile app |
-| Health Connect API | Biometric data (Samsung Health) |
-| Anthropic Claude API | AI nudges and weekly insights |
-| Railway | Backend hosting |
-| Vercel | Frontend hosting |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────┐     ┌─────────────────────┐
-│   React Frontend    │     │  Flutter Mobile App  │
-│   localhost:5173    │     │  (coming soon)       │
-└────────┬────────────┘     └──────────┬───────────┘
-         │ HTTP + JWT                  │ HTTP + JWT
-         ▼                             ▼
-┌─────────────────────────────────────────────────┐
-│           Spring Boot Backend                   │
-│              localhost:8081                     │
-│                                                 │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────────┐ │
-│  │   Auth   │ │  Habits  │ │    Check-ins     │ │
-│  └──────────┘ └──────────┘ └─────────────────┘ │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────────┐ │
-│  │ Autopsy  │ │ Claude AI│ │ Energy Calculator│ │
-│  │ (soon)   │ │  (soon)  │ │    (soon)        │ │
-│  └──────────┘ └──────────┘ └─────────────────┘ │
-└─────────────────────┬───────────────────────────┘
-                      │
-              ┌───────▼────────┐
-              │   PostgreSQL   │
-              └────────────────┘
-
-Future biometric data flow:
-Galaxy Watch → Samsung Health → Health Connect → Flutter App → Backend
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Java 21
-- Maven
-- PostgreSQL
-- Node.js 20+
-- IntelliJ IDEA (recommended)
-- VS Code (for frontend)
-
-### Backend Setup
-
-1. **Clone the repository**
 ```bash
-git clone https://github.com/shreyabadarkhe01/ember.git
-cd ember
-```
+cd backend
+# Create src/main/resources/application-local.properties with:
+# SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/ember
+# SPRING_DATASOURCE_USERNAME=your_username
+# SPRING_DATASOURCE_PASSWORD=your_password
+# JWT_SECRET=your-secret-key-min-32-chars
+# JWT_EXPIRATION=86400000
+# openai.api.key=your_openai_key
 
-2. **Create PostgreSQL database**
-```sql
-CREATE DATABASE ember;
-```
-
-3. **Configure `application.properties`**
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/ember
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-```
-
-4. **Run the backend**
-```bash
 mvn spring-boot:run
 ```
 
-Backend runs on `http://localhost:8081`
-
-5. **Open Swagger UI**
-```
-http://localhost:8081/swagger-ui/index.html
-```
-
-### Frontend Setup
-
-1. **Navigate to frontend directory**
+### Frontend
 ```bash
-cd ember-frontend
-```
-
-2. **Install dependencies**
-```bash
+cd frontend
 npm install
-```
-
-3. **Create `.env.local`**
-```env
-VITE_API_URL=http://localhost:8081
-```
-
-4. **Run the frontend**
-```bash
+# Create .env with: VITE_API_URL=http://localhost:8081
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173`
+### Mobile
+```bash
+cd ember_mobile
+flutter pub get
+flutter run
+```
+
+### Docker (backend only)
+```bash
+cd backend
+docker build -t ember-backend .
+docker run -p 8081:8081 \
+  -e SPRING_DATASOURCE_URL=... \
+  -e SPRING_DATASOURCE_USERNAME=... \
+  -e SPRING_DATASOURCE_PASSWORD=... \
+  -e JWT_SECRET=... \
+  -e JWT_EXPIRATION=86400000 \
+  -e openai.api.key=... \
+  ember-backend
+```
 
 ---
 
-## 📡 API Endpoints
+## API Reference
 
-### Auth
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | Login and get JWT token |
-
-### Users
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users` | Get all users |
-| GET | `/api/users/{id}` | Get user by ID |
-
-### Habits
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/users/{id}/habits` | Create a habit |
+| POST | `/api/auth/login` | Login, returns JWT |
 | GET | `/api/users/{id}/habits` | Get all habits |
-| PATCH | `/api/users/{id}/habits/{habitId}` | Edit habit |
-| PATCH | `/api/users/{id}/habits/{habitId}/complete` | Mark habit done ✅ |
-| PATCH | `/api/users/{id}/habits/{habitId}/skip` | Skip habit ⏭️ |
-| PATCH | `/api/users/{id}/habits/{habitId}/reset` | Undo done/skip ↩️ |
-| PATCH | `/api/users/{id}/habits/{habitId}/scale` | Scale habit by energy score |
-
-### Check-ins
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/users/{id}/checkins` | Create daily check-in |
-| GET | `/api/users/{id}/checkins` | Get all check-ins |
-| GET | `/api/users/{id}/checkins/today` | Get today's check-in |
-
-### Coming Soon
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/users/{id}/biometric-checkin` | Auto check-in from Health Connect |
-| GET | `/api/users/{id}/autopsy` | Weekly pattern report |
-| POST | `/api/users/{id}/ai/nudge` | Get Claude AI nudge |
-| GET | `/api/users/{id}/ai/autopsy-insight` | Get Claude AI weekly insight |
+| POST | `/api/users/{id}/habits/{hId}/complete` | Complete habit |
+| POST | `/api/users/{id}/habits/{hId}/skip` | Skip habit |
+| GET | `/api/users/{id}/checkins/today` | Today's check-in |
+| POST | `/api/users/{id}/checkins` | Create check-in |
+| POST | `/api/users/{id}/biometric-checkin` | Biometric check-in |
+| POST | `/api/users/{id}/ai/nudge` | Generate AI nudge |
+| GET | `/api/users/{id}/autopsy` | Weekly autopsy report |
 
 ---
 
-## 📊 Data Model
+## Architecture Decisions
 
-### Habit
-```json
-{
-  "id": 1,
-  "name": "Morning Run",
-  "minimalVersion": "Walk 10 mins",
-  "liteVersion": "Run 20 mins",
-  "fullVersion": "Run 30 mins + stretching",
-  "status": "ACTIVE",
-  "streakCount": 5,
-  "userId": 1,
-  "createdAt": "2026-05-01T08:00:00"
-}
-```
+**Package-by-feature** — each feature owns its controller, service, entity and repository. Scales better than package-by-layer as the codebase grows.
 
-### Check-in
-```json
-{
-  "id": 1,
-  "energyScore": 4,
-  "note": "Slept well last night",
-  "userId": 1,
-  "createdAt": "2026-05-05T08:30:00"
-}
-```
+**DTO boundaries** — entities never leave the service layer. MapStruct handles mapping at compile time with zero reflection overhead.
 
-### Energy Score Scale
-| Score | Label | Habits shown |
-|-------|-------|-------------|
-| 1 | 😴 Exhausted | Minimal version |
-| 2 | 😔 Low | Minimal version |
-| 3 | 😐 Moderate | Lite version |
-| 4 | 😊 Good | Full version |
-| 5 | 🔥 Energised | Full version |
+**Adaptive scaling** — energy score drives habit version selection client-side, keeping the backend stateless per request. Version text stored on the habit entity, selection logic in the frontend.
+
+**Health Connect** — Flutter reads biometrics via Android's unified Health Connect API, supporting any compatible wearable without manufacturer-specific SDKs.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-### Phase 1 — Core Backend ✅
-- [x] User authentication (JWT)
-- [x] Habit CRUD with 3 energy versions
-- [x] Daily check-in with energy score
-- [x] Habit status tracking (Done / Skipped / Reset)
-- [x] Streak counting
-- [x] Swagger UI with JWT support
-
-### Phase 2 — Frontend ✅
-- [x] Register / Login pages
-- [x] Dashboard with check-in form
-- [x] Habit list with energy-scaled versions
-- [x] Add / Edit habits
-- [x] Mark Done / Skip / Undo
-- [x] Ember dark theme
-
-### Phase 3 — Biometric Energy Score 🔜
-- [ ] Health Connect integration (Android)
-- [ ] Energy Calculator from sleep + HRV + resting heart rate + steps
-- [ ] Auto check-in from biometric data
-- [ ] Manual override option
-
-### Phase 4 — Autopsy + AI 🔜
-- [ ] Weekly autopsy report (7-day pattern analysis)
-- [ ] Best/worst day detection
-- [ ] Habit completion rate
-- [ ] Claude AI nudges after check-in
-- [ ] Claude AI weekly insight generation
-- [ ] Habit adjustment suggestions from AI
-
-### Phase 5 — Flutter Mobile App 🔜
-- [ ] Flutter Android app
-- [ ] Health Connect SDK integration
-- [ ] Auto morning check-in on app open
+- [ ] Play Store deployment (Health Connect live permissions)
+- [ ] Password reset via email
+- [ ] Account deletion
 - [ ] Push notifications for habit reminders
-- [ ] Dashboard, Habits, Autopsy screens
-
-### Phase 6 — Deployment 🔜
-- [ ] Backend on Railway
-- [ ] Frontend on Vercel
-- [ ] Flutter app on Google Play Store
-- [ ] CI/CD pipeline
+- [ ] Onboarding flow
+- [ ] Pattern detection improvements (more HabitLog data needed)
 
 ---
 
-## 🔮 Future Vision
-
-The end goal for Ember is **zero-friction habit tracking**:
-
-```
-You wake up
-    ↓
-Ember reads last night's sleep, HRV, and resting heart rate
-from Samsung Health via Health Connect
-    ↓
-Calculates your energy score automatically
-    ↓
-Scales all your habits to the right version for today
-    ↓
-Claude AI sends you a personalised morning nudge
-    ↓
-You go about your day — marking habits done as you go
-    ↓
-Sunday evening — Claude analyses your week:
-"Your energy drops every Wednesday. Your Tuesday sleep
-averages 5.5 hours — try sleeping 30 mins earlier on Tuesdays."
-```
-
-No manual energy entry. No guilt for missing a day. Just adaptive, intelligent habit tracking that works with your body.
-
----
-
-## 🤝 Contributing
-
-This project is currently in active development. Contributions, suggestions, and feedback are welcome!
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 👩‍💻 Author
-
-**Shreya Badarkhe**
-- GitHub: [@shreyabadarkhe01](https://github.com/shreyabadarkhe01)
-- Project: [github.com/shreyabadarkhe01/ember](https://github.com/shreyabadarkhe01/ember)
-
----
-
-> Built with ☕ and 🔥 in Pune, Maharashtra.
+*Built by Shreya Badarkhe — [github.com/shreyabadarkhe01](https://github.com/shreyabadarkhe01)*
