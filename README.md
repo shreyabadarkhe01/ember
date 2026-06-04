@@ -41,21 +41,20 @@ Ember is a full-stack habit tracking app that adapts your daily goals to your en
 - **Archive/unarchive habits** — hide habits without losing streak history
 - **Flutter mobile app** — full habit flow with bottom nav, autopsy chart, nudge card
 
----
+
 
 ## Project Structure
-ember/
-├── backend/          # Spring Boot API
-│   ├── auth/         # JWT authentication
-│   ├── habit/        # Habit CRUD + adaptive scaling
-│   ├── checkin/      # Daily check-ins
-│   ├── biometric/    # Health Connect biometric processing
-│   ├── ai/           # OpenAI nudge + autopsy insight
-│   ├── autopsy/      # Weekly report generation
-│   └── habitlog/     # Daily habit completion tracking
-├── frontend/         # React/Vite web app
-└── ember_mobile/     # Flutter mobile app
----
+    ember/
+    ├── backend/          # Spring Boot API
+    │   ├── auth/         # JWT authentication
+    │   ├── habit/        # Habit CRUD + adaptive scaling
+    │   ├── checkin/      # Daily check-ins
+    │   ├── biometric/    # Health Connect biometric processing
+    │   ├── ai/           # OpenAI nudge + autopsy insight
+    │   ├── autopsy/      # Weekly report generation
+    │   └── habitlog/     # Daily habit completion tracking
+    ├── frontend/         # React/Vite web app
+    └── ember_mobile/     # Flutter mobile app
 
 ## Local Setup
 
