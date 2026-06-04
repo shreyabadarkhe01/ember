@@ -48,52 +48,36 @@ public class AutopsyService {
         // Date range — last 7 days
         LocalDate weekEnd = LocalDate.now();
         LocalDate weekStart = weekEnd.minusDays(6);
-        log.info("Date range: {} to {}", weekStart, weekEnd);
 
         // Fetch check-ins for the week
         List<CheckIn> checkIns = checkInRepository
                 .findByUserIdAndCheckInDateBetweenOrderByCheckInDateAsc(userId, weekStart, weekEnd);
-        log.info("CheckIns found: {}", checkIns.size());
 
         // Fetch habits for the user
         List<Habit> habits = habitRepository.findByUserId(userId);
-        log.info("Habits found: {}", habits.size());
 
         // ── Build daily breakdown ────────────────────────────────────
-        log.info("Daily breakdown built");
         List<HabitLog> weekLogs = habitLogRepository.findByUserIdAndDateBetween(userId, weekStart, weekEnd);
         List<DailyEnergyDto> energyByDay = buildDailyBreakdown(weekStart, weekEnd, checkIns, weekLogs);
-        log.info("Daily breakdown done");
-
-        log.info("Building AutopsyDto...");
 
         // ── Energy analysis ──────────────────────────────────────────
-        log.info("Calculating scores...");
+
         List<Integer> scores = checkIns.stream()
                 .map(CheckIn::getEnergyScore)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        log.info("Scores: {}", scores);
 
         double avgEnergy = scores.isEmpty() ? 0.0 :
                 scores.stream().mapToInt(i -> i).average().orElse(0.0);
-        log.info("Avg energy: {}", avgEnergy);
 
         // Best and worst days
-        log.info("Finding best day...");
         String bestDay = findDayByScore(checkIns, true);
-        log.info("Best day: {}", bestDay);
-        log.info("Finding worst day...");
         String worstDay = findDayByScore(checkIns, false);
-        log.info("Worst day: {}", worstDay);
 
-        log.info("Counting high/low energy days...");
         long highEnergyDays = scores.stream().filter(s -> s >= 4).count();
         long lowEnergyDays = scores.stream().filter(s -> s <= 2).count();
-        log.info("High: {}, Low: {}", highEnergyDays, lowEnergyDays);
 
         // ── Consistency ──────────────────────────────────────────────
-        log.info("Consistency...");
         int totalCheckIns = (int) checkIns.stream()
                 .map(CheckIn::getCheckInDate)
                 .distinct()
@@ -102,9 +86,6 @@ public class AutopsyService {
 
         // ── Habit performance ────────────────────────────────────────
         // Count habits by status across all check-ins this week
-
-        log.info("Habit performance...");
-
 
         // Per-habit weekly summary
         List<HabitWeeklySummaryDto> habitSummaries = habits.stream()
@@ -142,32 +123,22 @@ public class AutopsyService {
                 .filter(h -> h.getStatus() != HabitStatus.ARCHIVED)
                 .count();
         int totalHabits = totalCheckIns * activeHabitCount; // total possible completions this week
-//        log.info("Done habits: {}", doneLogs);
 
         // ── Pattern detection ────────────────────────────────────────
-        log.info("Detecting patterns...");
         List<String> energyPatterns = detectPatterns(checkIns, avgEnergy);
-        List<String> habitPatterns = detectHabitPatterns(userId, weekStart, weekEnd, checkIns);
+        List<String> habitPatterns = detectHabitPatterns(userId, weekStart, weekEnd, checkIns, habits);
 
         List<String> allPatterns = new ArrayList<>();
         allPatterns.addAll(habitPatterns);
         allPatterns.add("__DIVIDER__"); // frontend uses this to split sections
         allPatterns.addAll(energyPatterns);
-        log.info("Patterns done");
 
         // ── Biometric correlations ───────────────────────────────────
-        log.info("Sleep correlation...");
         String sleepCorrelation = analyseSleepCorrelation(checkIns);
-        log.info("Sleep done");
-
-        log.info("HRV correlation...");
         String hrvCorrelation = analyseHrvCorrelation(checkIns);
-        log.info("HRV done");
 
         // ── Week summary label ───────────────────────────────────────
-        log.info("Week summary...");
         String weekSummary = generateWeekSummary(avgEnergy, consistencyScore);
-        log.info("Building final DTO...");
 
         AutopsyDto autopsy = AutopsyDto.builder()
                 .userId(userId)
@@ -217,14 +188,12 @@ public class AutopsyService {
             LocalDate weekStart, LocalDate weekEnd, List<CheckIn> checkIns,
             List<HabitLog> weekLogs) {
 
-        log.info("Building map...");
         Map<LocalDate, CheckIn> checkInMap = checkIns.stream()
                 .collect(Collectors.toMap(
                         CheckIn::getCheckInDate,
                         c -> c,
                         (existing, replacement) -> replacement // keeps latest if duplicate
                 ));
-        log.info("Map built: {}", checkInMap.size());
 
         // Group habit logs by date — only DONE ones
         Map<LocalDate, List<String>> habitsDoneByDate = weekLogs.stream()
@@ -364,17 +333,22 @@ public class AutopsyService {
         return patterns;
     }
 
-    private List<String> detectHabitPatterns(Long userId, LocalDate from, LocalDate to, List<CheckIn> checkIns) {
+    private List<String> detectHabitPatterns(Long userId, LocalDate from, LocalDate to,
+                                             List<CheckIn> checkIns, List<Habit> habits) {
         List<String> patterns = new ArrayList<>();
 
-       final List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
+        final List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
 
         if (logs.isEmpty()) {
             patterns.add("📊 No habit activity logged this week yet");
             return patterns;
         }
 
-        // ── Group by habit ────────────────────────────────────────────────
+        // Build habit name lookup map from habits list — fixes "Unknown habit"
+        Map<Long, String> habitNameMap = habits.stream()
+                .collect(Collectors.toMap(Habit::getId, Habit::getName));
+
+        // Group by habit
         Map<Long, List<HabitLog>> byHabit = logs.stream()
                 .collect(Collectors.groupingBy(HabitLog::getHabitId));
 
@@ -385,58 +359,55 @@ public class AutopsyService {
 
         for (Map.Entry<Long, List<HabitLog>> entry : byHabit.entrySet()) {
             List<HabitLog> habitLogs = entry.getValue();
-            String name = habitLogs.get(0).getHabitName() != null
-                    ? habitLogs.get(0).getHabitName() : "Unknown habit";
+            // Use name lookup map instead of getHabitName()
+            String name = habitNameMap.getOrDefault(entry.getKey(), "Habit #" + entry.getKey());
 
             long done = habitLogs.stream()
                     .filter(l -> l.getStatus() == HabitStatus.DONE).count();
             long skipped = habitLogs.stream()
                     .filter(l -> l.getStatus() == HabitStatus.SKIPPED).count();
 
-            // Best performing
             if (done > bestDone) {
                 bestDone = (int) done;
                 bestHabit = name;
             }
 
-            // Worst performing
             if (skipped > worstSkipped) {
                 worstSkipped = (int) skipped;
                 worstHabit = name;
             }
 
             if (skipped >= 3) {
-                patterns.add("📉 " + name + " skipped " + skipped + "x this week — streak at risk, consider a lighter version");
+                patterns.add("📉 " + name + " skipped " + skipped + "x this week — consider a lighter version");
             } else if (skipped == 2) {
                 patterns.add("⚠️ " + name + " skipped twice this week — streak at risk");
             }
         }
 
-        // Best habit first — positive reinforcement
+        // Best habit — positive reinforcement
         if (bestHabit != null && bestDone >= 3) {
             patterns.add(0, "🎯 " + bestHabit + " is your strongest habit — completed " + bestDone + "x this week");
         }
 
-        // Worst habit after
+        // Worst habit
         if (worstHabit != null && worstSkipped >= 3) {
             patterns.add("🔴 " + worstHabit + " needs the most attention this week");
         }
 
-        // ── Energy-habit correlation ──────────────────────────────────────
-        // Build a map of date → energyScore from check-ins
+        // Energy-habit correlation — build energy map
         Map<LocalDate, Integer> energyByDate = checkIns.stream()
                 .filter(c -> c.getEnergyScore() != null)
                 .collect(Collectors.toMap(
                         CheckIn::getCheckInDate,
                         CheckIn::getEnergyScore,
-                        (a, b) -> a // keep first if duplicate date
+                        (a, b) -> a
                 ));
 
-        // For each habit, check if it's skipped on low energy days specifically
+        // Collect habits consistently skipped on low energy — deduplicated into one insight
+        List<String> lowEnergySkippers = new ArrayList<>();
         for (Map.Entry<Long, List<HabitLog>> entry : byHabit.entrySet()) {
             List<HabitLog> habitLogs = entry.getValue();
-            String name = habitLogs.get(0).getHabitName() != null
-                    ? habitLogs.get(0).getHabitName() : "Unknown habit";
+            String name = habitNameMap.getOrDefault(entry.getKey(), "Habit #" + entry.getKey());
 
             long skippedOnLowEnergy = habitLogs.stream()
                     .filter(l -> l.getStatus() == HabitStatus.SKIPPED)
@@ -455,17 +426,21 @@ public class AutopsyService {
                     .count();
 
             if (skippedOnLowEnergy >= 2 && doneOnLowEnergy == 0) {
-                patterns.add("🔗 " + name + " is consistently skipped on low energy days — consider a lighter minimal version");
+                lowEnergySkippers.add(name);
             }
         }
 
-        // ── Biometric correlations ────────────────────────────────────────
-        // Sleep → completion rate
+        // Single deduplicated insight instead of one per habit
+        if (lowEnergySkippers.size() == 1) {
+            patterns.add("🔗 " + lowEnergySkippers.get(0) + " is consistently skipped on low energy days — consider a lighter minimal version");
+        } else if (lowEnergySkippers.size() > 1) {
+            patterns.add("🔗 " + lowEnergySkippers.size() + " habits are consistently skipped on low energy days — minimal versions need review");
+        }
+
+        // Sleep correlation
         List<HabitLog> doneAfterGoodSleep = logs.stream()
                 .filter(l -> l.getStatus() == HabitStatus.DONE)
                 .filter(l -> {
-                    Integer energy = energyByDate.get(l.getDate());
-                    // proxy: if energy >= 4 on that day (biometric sleep data if available)
                     CheckIn ci = checkIns.stream()
                             .filter(c -> c.getCheckInDate().equals(l.getDate()))
                             .findFirst().orElse(null);
@@ -512,7 +487,7 @@ public class AutopsyService {
             patterns.add("❤️ High HRV days correlate with better habit completion — recovery is working");
         }
         if (lowHrvSkipped >= 2) {
-            patterns.add("📡 Low HRV days see more skipped habits — your body signals are reliable stress indicators");
+            patterns.add("📡 Low HRV days see more skipped habits — your body signals are reliable");
         }
 
         return patterns;
