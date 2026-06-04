@@ -126,7 +126,7 @@ public class AutopsyService {
 
         // ── Pattern detection ────────────────────────────────────────
         List<String> energyPatterns = detectPatterns(checkIns, avgEnergy);
-        List<String> habitPatterns = detectHabitPatterns(userId, weekStart, weekEnd, checkIns, habits);
+        List<String> habitPatterns = detectHabitPatterns(weekLogs, checkIns, habits);
 
         List<String> allPatterns = new ArrayList<>();
         allPatterns.addAll(habitPatterns);
@@ -333,11 +333,8 @@ public class AutopsyService {
         return patterns;
     }
 
-    private List<String> detectHabitPatterns(Long userId, LocalDate from, LocalDate to,
-                                             List<CheckIn> checkIns, List<Habit> habits) {
+    private List<String> detectHabitPatterns(List<HabitLog> logs, List<CheckIn> checkIns, List<Habit> habits) {
         List<String> patterns = new ArrayList<>();
-
-        final List<HabitLog> logs = habitLogRepository.findByUserIdAndDateBetween(userId, from, to);
 
         if (logs.isEmpty()) {
             patterns.add("📊 No habit activity logged this week yet");
