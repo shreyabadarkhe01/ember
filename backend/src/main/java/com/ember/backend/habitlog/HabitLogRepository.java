@@ -27,4 +27,6 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
     boolean existsByHabitIdAndDateAndStatus(Long habitId, LocalDate date, HabitStatus status);
 
     void deleteByHabitIdAndDate(Long habitId, LocalDate date);
+
+    void deleteByUserId(Long userId);
 }

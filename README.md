@@ -54,7 +54,7 @@ Ember is a full-stack habit tracking app that adapts your daily goals to your en
     │   ├── autopsy/      # Weekly report generation
     │   └── habitlog/     # Daily habit completion tracking
     ├── frontend/         # React/Vite web app
-    └── ember_mobile/     # Flutter mobile app
+    └── ember_mobile/     # Flutter mobile app (separate repo: github.com/shreyabadarkhe01/ember_mobile)
 
 ## Local Setup
 

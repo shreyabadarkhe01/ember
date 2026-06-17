@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Ember</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0F0F0F;
+      color: #CCCCCC;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      padding: 0 20px;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 60px 0 100px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 48px;
+    }
+
+    .brand-flame {
+      font-size: 28px;
+    }
+
+    .brand-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6B35;
+      letter-spacing: -0.5px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .updated {
+      font-size: 13px;
+      color: #555555;
+      margin-bottom: 40px;
+    }
+
+    .intro {
+      background: #1A1A1A;
+      border-left: 3px solid #FF6B35;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin-bottom: 48px;
+      color: #AAAAAA;
+      font-size: 15px;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FF6B35;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      margin-top: 40px;
+    }
+
+    p {
+      color: #AAAAAA;
+      margin-bottom: 14px;
+      font-size: 15px;
+    }
+
+    ul {
+      list-style: none;
+      margin-bottom: 14px;
+    }
+
+    ul li {
+      color: #AAAAAA;
+      font-size: 15px;
+      padding: 6px 0 6px 20px;
+      position: relative;
+    }
+
+    ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: #333333;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1E1E1E;
+      margin: 40px 0;
+    }
+
+    a {
+      color: #FF6B35;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .contact-box {
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 40px;
+    }
+
+    .contact-box p {
+      margin-bottom: 6px;
+    }
+
+    .contact-box .contact-label {
+      font-size: 12px;
+      color: #555555;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+
+    footer {
+      margin-top: 60px;
+      font-size: 13px;
+      color: #333333;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="brand">
+      <span class="brand-flame">🔥</span>
+      <span class="brand-name">Ember</span>
+    </div>
+
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: June 17, 2026</p>
+
+    <div class="intro">
+      Ember is an adaptive habit tracker built around your energy. This policy explains what data we collect, why we collect it, and how it is stored and protected.
+    </div>
+
+    <h2>What we collect</h2>
+    <p>When you use Ember, we collect the following information:</p>
+    <ul>
+      <li>Your email address and encrypted password, used to create and authenticate your account</li>
+      <li>Habit data you enter — habit names, energy tiers (Minimal / Lite / Full), and completion status</li>
+      <li>Daily check-in data — energy level, mood, notes, and the date of each check-in</li>
+      <li>Health and biometric data (step count, heart rate, sleep hours, calories) if you grant Health Connect permission on Android</li>
+      <li>AI-generated nudge text associated with your check-ins, stored to avoid repeated API calls</li>
+    </ul>
+
+    <hr class="divider" />
+
+    <h2>How we use your data</h2>
+    <ul>
+      <li>To authenticate you and keep your account secure</li>
+      <li>To display your habits, streaks, and check-in history</li>
+      <li>To generate personalised AI nudges and weekly autopsy insights based on your energy patterns</li>
+      <li>To calculate habit streaks and energy correlations shown in the Autopsy screen</li>
+    </ul>
+
+    <hr class="divider" />
+
+    <h2>Health Connect data</h2>
+    <p>If you grant Ember access to Android Health Connect, we read step count, heart rate, sleep duration, and calorie data from your device. This data is:</p>
+    <ul>
+      <li>Read locally from Health Connect and sent to our backend only to enrich your check-in context</li>
+      <li>Never sold, shared with advertisers, or used for any purpose beyond powering your personal habit insights</li>
+      <li>Revocable at any time by removing Ember's permissions in your Health Connect settings</li>
+    </ul>
+
+    <hr class="divider" />
+
+    <h2>Data storage</h2>
+    <p>Your data is stored in a PostgreSQL database hosted on Supabase. Passwords are hashed and never stored in plain text. All communication between the app and our servers uses HTTPS.</p>
+    <p>Our backend is hosted on Render (United States). By using Ember, you acknowledge that your data may be processed in the United States.</p>
+
+    <hr class="divider" />
+
+    <h2>Third-party services</h2>
+    <p>Ember uses the following third-party services:</p>
+    <ul>
+      <li><strong style="color:#CCCCCC">OpenAI</strong> — generates AI nudges and weekly insight summaries. Only anonymised habit and energy context is sent; no personally identifiable information is shared.</li>
+      <li><strong style="color:#CCCCCC">Supabase</strong> — PostgreSQL database hosting.</li>
+      <li><strong style="color:#CCCCCC">Render</strong> — backend API hosting.</li>
+      <li><strong style="color:#CCCCCC">Vercel</strong> — web frontend hosting.</li>
+    </ul>
+
+    <hr class="divider" />
+
+    <h2>Data retention and deletion</h2>
+    <p>You can permanently delete your account and all associated data at any time from the Settings screen in the Ember app. Deletion removes your account, all habits, all check-ins, and all logs immediately and irreversibly.</p>
+
+    <hr class="divider" />
+
+    <h2>Children's privacy</h2>
+    <p>Ember is not directed at children under the age of 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal information, please contact us and we will delete it promptly.</p>
+
+    <hr class="divider" />
+
+    <h2>Changes to this policy</h2>
+    <p>We may update this policy from time to time. When we do, the "Last updated" date at the top of this page will change. Continued use of Ember after changes constitutes acceptance of the updated policy.</p>
+
+    <div class="contact-box">
+      <p class="contact-label">Contact</p>
+      <p>For any privacy-related questions or data deletion requests, reach out at:</p>
+      <p><a href="mailto:shreyabadarkhe01@gmail.com">shreyabadarkhe01@gmail.com</a></p>
+    </div>
+
+    <footer>
+      &copy; 2026 Ember. All rights reserved.
+    </footer>
+
+  </div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.ember.backend.checkin;
 
+import com.ember.backend.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -13,4 +14,6 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
     Optional<CheckIn> findTopByUserIdOrderByCheckInDateDesc(Long userId);
     List<CheckIn> findByUserIdAndCheckInDateBetweenOrderByCheckInDateAsc(
             Long userId, LocalDate start, LocalDate end);
+
+    void deleteByUser(User user);
 }

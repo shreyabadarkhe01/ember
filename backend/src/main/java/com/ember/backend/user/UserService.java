@@ -38,7 +38,11 @@
 
 package com.ember.backend.user;
 
+import com.ember.backend.checkin.CheckInRepository;
 import com.ember.backend.common.AppException;
+import com.ember.backend.habit.HabitRepository;
+import com.ember.backend.habitlog.HabitLogRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,6 +58,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final HabitRepository habitRepository;
+    private final CheckInRepository checkInRepository;
+    private final HabitLogRepository habitLogRepository;
 
 
     public UserDto createUser(User user) {
@@ -80,6 +87,16 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException("User not found with email: " + email, HttpStatus.NOT_FOUND));
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+        habitLogRepository.deleteByUserId(id);
+        checkInRepository.deleteByUser(user);
+        habitRepository.deleteByUserId(id);
+        userRepository.deleteById(id);
     }
 }
 

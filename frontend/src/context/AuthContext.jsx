@@ -34,8 +34,19 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const deleteAccount = async () => {
+    const token = localStorage.getItem('ember_token');
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const response = await fetch(`${base}/api/users/${user.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to delete account');
+    logout();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, deleteAccount, loading }}>
       {children}
     </AuthContext.Provider>
   );

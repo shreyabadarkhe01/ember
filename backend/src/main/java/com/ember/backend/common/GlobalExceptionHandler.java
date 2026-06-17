@@ -30,6 +30,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+
         return buildResponse("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

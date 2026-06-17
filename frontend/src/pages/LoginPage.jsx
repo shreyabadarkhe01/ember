@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const successMessage = location.state?.message;
 
@@ -20,12 +21,11 @@ export default function LoginPage() {
       await login(form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Login error:', err);
-      // Handle different error response formats
-      const errorMessage = err.response?.data?.message
-        || err.response?.data?.error
-        || err.message
-        || 'Invalid email or password.';
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        'Invalid email or password.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -55,13 +55,41 @@ export default function LoginPage() {
           </div>
           <div className="field">
             <label>Password</label>
-            <input
-              type="password"
-              placeholder="Your password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Your password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+                style={{ paddingRight: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute', right: '0.75rem', top: '50%',
+                  transform: 'translateY(-50%)', background: 'none',
+                  border: 'none', cursor: 'pointer', fontSize: '1rem',
+                  color: '#888', padding: 0
+                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: '0.78rem', textAlign: 'right' }}>
+              <button
+                type="button"
+                onClick={() => alert('Password reset coming soon!')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: '#888', fontSize: '0.78rem', padding: 0
+                }}
+              >
+                Forgot password?
+              </button>
+            </p>
           </div>
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign in'}
